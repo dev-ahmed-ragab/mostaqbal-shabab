@@ -1,16 +1,18 @@
 'use client';
 
 import React, { useEffect, useState, useRef, Suspense } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { QRCodeSVG } from 'qrcode.react';
-import { Printer, Download, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Printer, Download, ChevronRight, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Complaint, STATUS_META } from '@/types/database';
 import { complaintsService } from '@/lib/complaintsService';
 import { generatePdfFromElement } from '@/lib/generatePdf';
 
 function PrintComplaintContent() {
   const params = useParams();
+  const router = useRouter();
   const id = params?.id as string;
 
   const [complaint, setComplaint] = useState<Complaint | null>(null);
@@ -36,6 +38,14 @@ function PrintComplaintContent() {
     fetchComplaint();
   }, [id]);
 
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      window.history.back();
+    } else {
+      router.push('/admin');
+    }
+  };
+
   const handleDownloadPdf = async () => {
     if (!printDocRef.current || !complaint) return;
     setIsGeneratingPdf(true);
@@ -53,16 +63,26 @@ function PrintComplaintContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-10 text-slate-500 font-bold text-sm">
-        جاري تجهيز استمارة الشكوى للطباعة...
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-10 text-slate-500 font-bold text-sm gap-3">
+        <div className="w-8 h-8 border-3 border-[#133063] border-t-transparent rounded-full animate-spin" />
+        <span>جاري تجهيز استمارة الشكوى للطباعة...</span>
       </div>
     );
   }
 
   if (!complaint) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-10 text-rose-600 font-bold text-sm">
-        لم يتم العثور على الشكوى المطلوبة.
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-10 text-center gap-4">
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-bold">
+          لم يتم العثور على الشكوى المطلوبة (الكود: {id}).
+        </div>
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#133063] text-white text-xs font-bold hover:bg-[#0d234a] transition"
+        >
+          <ChevronRight className="w-4 h-4" />
+          العودة للوحة الإدارة
+        </Link>
       </div>
     );
   }
@@ -74,36 +94,36 @@ function PrintComplaintContent() {
   const statusInfo = STATUS_META[complaint.status] || STATUS_META.new;
 
   return (
-    <div className="bg-slate-100 min-h-screen py-8 px-4 flex flex-col items-center">
-      {/* شريط الإجراءات العلوي (لا يظهر في الطباعة) */}
-      <div className="w-full max-w-[210mm] mb-6 flex items-center justify-between no-print bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+    <div className="bg-slate-100 min-h-screen py-6 px-3 sm:px-6 flex flex-col items-center">
+      {/* شريط الإجراءات والعودة العلوي (لا يظهر أثناء الطباعة) */}
+      <div className="w-full max-w-[210mm] mb-5 flex flex-wrap items-center justify-between gap-3 no-print bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200">
         <button
           type="button"
-          onClick={() => window.history.back()}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900"
+          onClick={handleBack}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 transition cursor-pointer"
         >
-          <ArrowRight className="w-4 h-4" />
-          العودة
+          <ChevronRight className="w-4 h-4 text-[#00a3e0]" />
+          <span>العودة لإدارة الشكاوى</span>
         </button>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleDownloadPdf}
             disabled={isGeneratingPdf}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white transition disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white transition shadow-xs disabled:opacity-50 cursor-pointer"
           >
             <Download className="w-4 h-4" />
-            {isGeneratingPdf ? 'جاري التوليد...' : 'تنزيل PDF رسمي'}
+            <span>{isGeneratingPdf ? 'جاري التوليد...' : 'تنزيل PDF معتمد'}</span>
           </button>
 
           <button
             type="button"
             onClick={() => window.print()}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white transition"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#133063] hover:bg-[#0d234a] text-white transition shadow-md shadow-[#133063]/20 cursor-pointer"
           >
-            <Printer className="w-4 h-4" />
-            طباعة المستند
+            <Printer className="w-4 h-4 text-[#00a3e0]" />
+            <span>طباعة المستند (Ctrl+P)</span>
           </button>
         </div>
       </div>
@@ -112,21 +132,26 @@ function PrintComplaintContent() {
       <div
         ref={printDocRef}
         id="official-print-document"
-        className="w-full max-w-[210mm] bg-white text-black p-6 sm:p-8 shadow-xl border border-slate-300 rounded-none relative overflow-hidden"
+        className="w-full max-w-[210mm] bg-white text-black p-6 sm:p-8 shadow-xl border border-slate-300 rounded-none relative overflow-hidden text-right"
+        style={{ direction: 'rtl' }}
       >
-        {/* الترويسة الرسمية */}
+        {/* الترويسة الرسمية للحزب واللجنة */}
         <div className="flex items-start justify-between border-b-2 border-[#133063] pb-3 mb-3">
           <div className="space-y-0.5 text-right">
             <h3 className="text-[11px] font-bold text-slate-700">جمهورية مصر العربية</h3>
-            <span className="text-[11px] font-bold text-[#00a3e0] block">حزب مستقبل وطن • كلنا نعمل من أجل مصر</span>
-            <h1 className="text-base font-extrabold text-[#133063]">لجنة رعاية الشباب</h1>
+            <span className="text-[11px] font-bold text-[#00a3e0] block">
+              حزب مستقبل وطن • أمانة المحافظة
+            </span>
+            <h1 className="text-base font-extrabold text-[#133063]">
+              {complaint.committee_name || 'لجنة رعاية الشباب'}
+            </h1>
             <p className="text-[10px] font-semibold text-slate-600">مكتب خدمة المواطنين والشكاوى</p>
           </div>
 
           <div className="flex flex-col items-center">
             <div className="relative w-14 h-14 mb-0.5">
               <Image
-                src="/logo.svg"
+                src="/logo.png"
                 alt="شعار حزب مستقبل وطن"
                 width={56}
                 height={56}
@@ -145,7 +170,7 @@ function PrintComplaintContent() {
               level="M"
               fgColor="#000000"
             />
-            <span className="text-[9px] font-mono mt-0.5 text-slate-600">
+            <span className="text-[9px] font-mono mt-0.5 text-slate-600 font-bold">
               {complaint.tracking_code}
             </span>
           </div>
@@ -155,7 +180,7 @@ function PrintComplaintContent() {
         <div className="grid grid-cols-3 gap-2 border border-black p-2 bg-slate-50 text-[11px] font-semibold mb-3">
           <div>
             <span className="text-slate-600 block text-[9px]">كود الشكوى:</span>
-            <span className="font-mono text-xs font-extrabold">{complaint.tracking_code}</span>
+            <span className="font-mono text-xs font-extrabold text-[#133063]">{complaint.tracking_code}</span>
           </div>
           <div>
             <span className="text-slate-600 block text-[9px]">تاريخ وتوقيت الورود:</span>
@@ -228,7 +253,7 @@ function PrintComplaintContent() {
               <span className="font-bold text-slate-800 block text-[10px]">
                 الموضوع:
               </span>
-              <p className="font-bold text-xs">{complaint.title}</p>
+              <p className="font-bold text-xs text-[#133063]">{complaint.title}</p>
             </div>
             <div>
               <span className="font-bold text-slate-800 block text-[10px]">
@@ -240,20 +265,20 @@ function PrintComplaintContent() {
             {complaint.attachments && complaint.attachments.length > 0 && (
               <div className="pt-1 border-t border-slate-300 text-[10px]">
                 <span className="font-bold">المرفقات المسجلة: </span>
-                <span>{complaint.attachments.length} ملفات محفوظة إلكترونياً.</span>
+                <span>{complaint.attachments.length} ملفات محفوظة إلكترونياً بالمنظومة.</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* تأشيرة وقرار لجنة رعاية الشباب */}
+        {/* تأشيرة وقرار اللجنة المختصة */}
         <div className="mb-4">
           <h4 className="text-[11px] font-extrabold bg-slate-200 border-x border-t border-black px-2.5 py-0.5">
-            ثالثاً: دراسة الموقف وقرار وتأشيرة لجنة رعاية الشباب
+            ثالثاً: دراسة الموقف وقرار وتأشيرة اللجنة
           </h4>
           <div className="border border-black p-2.5 min-h-[70px] text-[11px] space-y-1 relative">
-            <span className="font-bold text-slate-800 block text-[10px]">إفادة وقرار اللجنة:</span>
-            <p className="text-slate-700 italic text-[11px]">
+            <span className="font-bold text-slate-800 block text-[10px]">إفادة وتأشيرة اللجنة:</span>
+            <p className="text-slate-800 italic text-[11px]">
               {complaint.admin_notes ||
                 '................................................................................................................................................................................................................................................................................................................................................................................................................................'}
             </p>
@@ -267,7 +292,7 @@ function PrintComplaintContent() {
           </div>
         </div>
 
-        {/* خانات الاعتماد والتوقيعات والأختام */}
+        {/* خانات الاعتماد والتوقيعات والأختام الرسمية */}
         <div className="grid grid-cols-3 gap-4 text-center text-[11px] font-bold pt-2 border-t-2 border-black">
           <div className="space-y-6">
             <span>مقرر لجنة الشباب</span>
@@ -293,7 +318,7 @@ function PrintComplaintContent() {
 
         {/* تذييل المستند */}
         <div className="mt-3 pt-2 border-t border-slate-300 flex items-center justify-between text-[8px] text-slate-500">
-          <span>مستند رسمي صادر عن حزب مستقبل وطن - لجنة رعاية الشباب</span>
+          <span>مستند رسمي صادر عن حزب مستقبل وطن - منظومة خدمة المواطنين</span>
           <span>تاريخ الطباعة: {printDate || '2026/10/30'}</span>
         </div>
       </div>
@@ -303,7 +328,13 @@ function PrintComplaintContent() {
 
 export default function PrintComplaintPage() {
   return (
-    <Suspense fallback={<div className="p-10 text-center text-sm text-slate-500">جاري تجهيز استمارة الطباعة...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-10 text-center text-sm font-bold text-slate-500">
+          جاري تجهيز استمارة الطباعة...
+        </div>
+      }
+    >
       <PrintComplaintContent />
     </Suspense>
   );
