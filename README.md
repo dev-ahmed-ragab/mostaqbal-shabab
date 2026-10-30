@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏛️ منصة خدمة المواطنين والشكاوى - أمانة شباب قسم إمبابة
+> **حزب مستقبل وطن - محافظة الجيزة**
 
-## Getting Started
+منظومة إلكترونية متكاملة لاستقبال ومتابعة شكاوى وطلبات أهالي دائرة إمبابة، وتوزيعها على لجان الأمانة المختصة، مع لوحات تحكم متقدمة لمتابعة الأداء وإصدار التقارير وطباعة خطابات التحويل الرسمية.
 
-First, run the development server:
+---
+
+## 🌟 أبرز مميزات المنصة
+
+- 📱 **واجهة مواطنين سهلة وسريعة (PWA):** تدعم التثبيت كتطبيق على الهواتف مع واجهة متجاوبة بالكامل وهوية وطنية متناسقة.
+- 📝 **تقديم الطلبات والشكاوى:** رفع شكوى جديدة مع رفع المرفقات (صور/مستندات/فيديوهات) وتحديد نوع الطلب واللجنة المختصة والموقع الجغرافي.
+- 🔍 **متابعة فورية للشكوى:** يمكن للمواطن الاستعلام عن حالة الشكوى ومسار حلها باستخدام **الرقم القومي** أو **كود الشكوى**.
+- 👥 **لوحة تحكم اللجان النوعية:** واجهة خاصة بكل لجنة (التعليم، الصحة، الإسكان، التضامن...) لاستلام المهام وتحديث حالتها وإضافة ملاحظات التوجيه.
+- 📊 **لوحة تحكم الإدارة العليا (Admin Dashboard):**
+  - إحصائيات عامة، معدلات الإنجاز، ونسب الحسم.
+  - تعيين وتحويل الشكاوى بين اللجان وتغيير الأولوية.
+  - طباعة تقارير رسمية وخطابات إحالة موثقة بباركود QR وخطاب رسمي موجه للجهات التنفيذية.
+  - تصدير البيانات إلى Excel وتقارير إحصائية.
+- ⚡ **دعم التشغيل المزدوج (Hybrid Data Mode):** المنصة تعمل فورياً بنمط محاكاة داخلي متطور (Mock Mode) وتدعم الربط المباشر مع قاعدة بيانات سحابية **Supabase**.
+
+---
+
+## 🛠️ التقنيات المستخدمة
+
+- **Framework:** [Next.js](https://nextjs.org/) (App Router, Turbopack, React 19)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **Icons:** [Lucide React](https://lucide.dev/)
+- **Backend & Database:** [Supabase](https://supabase.com/) (PostgreSQL & Storage)
+- **Deployment:** [Vercel](https://vercel.com/)
+
+---
+
+## 🔐 إعداد المتغيرات البيئية (Environment Variables)
+
+### ⚠️ قاعدة أمان مهمة جداً:
+> **لا تقم أبداً برفع ملف `.env` أو `.env.local` على GitHub!**
+> هذه الملفات تحتوي على مفاتيح سرية ويتم تجاهلها تلقائياً بواسطة ملف `.gitignore`.
+
+### 1. في بيئة التطوير المحلية (Local Machine):
+قم بإنشاء ملف باسم `.env.local` في المجلد الرئيسي للمشروع (بجانب `package.json`)، وانسخ بداخله القيم كما في `.env.example`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key-here
+NEXT_PUBLIC_SUPABASE_BUCKET=complaint-media
+```
+*(إذا لم تضف هذه المفاتيح محلياً، سيعمل المشروع تلقائياً بنمط المحاكاة دون أي أخطاء).*
+
+### 2. في بيئة الاستضافة على Vercel:
+أثناء أو بعد ربط المشروع بـ Vercel:
+1. توجه إلى لوحة تحكم المشروع في Vercel ثم اضغط على **Settings** -> **Environment Variables**.
+2. أضف كل متغير من المتغيرات السابقة مع قيمته الحقيقية الخاصة بقاعدة بيانات Supabase.
+3. اضغط **Save** وسيتم تطبيقها تلقائياً على الإصدار المباشر (Production).
+
+---
+
+## 🚀 التشغيل على الجهاز المحلي (Local Development)
 
 ```bash
+# 1. تثبيت الحزم والمكتبات
+npm install
+
+# 2. تشغيل السيرفر المحلي للتطوير
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+افتح المتصفح على الرابط: [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🌐 النشر على Vercel (Deployment)
 
-## Learn More
+1. تم رفع الكود المصدري على مستودع GitHub:
+   `https://github.com/dev-ahmed-ragab/mostaqbal-shabab`
+2. افتح [لوحة تحكم Vercel](https://vercel.com/dashboard) واضغط **Add New...** -> **Project**.
+3. اختر مستودع `mostaqbal-shabab` من حساب GitHub الخاص بك.
+4. في خانة **Environment Variables**، قم بإضافة المتغيرات المطلوبة.
+5. اضغط **Deploy**.
+6. في ثوانٍ معدودة، سيكون موقعك جاهزاً ومباشراً على رابط Vercel الخاص بك مع دعم التحديث التلقائي عند كل `git push`.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📄 هيكل المشروع الأساسي
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```text
+├── src/
+│   ├── app/                 # صفحات وتوجيهات Next.js App Router
+│   │   ├── admin/           # لوحات تحكم الإدارة والتقارير والطباعة
+│   │   ├── committee/       # لوحات عمل اللجان النوعية
+│   │   ├── submit/          # نموذج تقديم الشكوى / الطلب للمواطن
+│   │   ├── track/           # استعلام المواطن عن حالة الشكوى
+│   │   └── page.tsx         # الصفحة الرئيسية والتعريف بالأمانة
+│   ├── components/          # المكونات المشتركة وواجهة المستخدم
+│   ├── lib/                 # دوال الاتصال مع Supabase والبيانات
+│   └── types/               # تعريفات TypeScript للشكاوى والمستخدمين
+├── supabase/                # مخطط قاعدة البيانات (Schema & Migrations)
+├── public/                  # الصور والأيقونات وشعار الأمانة وملفات الوسائط
+├── .env.example             # نموذج المتغيرات البيئية للتوجيه
+└── README.md                # دليل المنصة والتشغيل
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+حقوق المنظومة محفوظة © أمانة شباب قسم إمبابة - حزب مستقبل وطن

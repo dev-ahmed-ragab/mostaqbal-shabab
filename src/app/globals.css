@@ -1,26 +1,136 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --primary: #133063;
+    --primary-hover: #0d234a;
+    --accent: #00a3e0;
+    --accent-hover: #0284c7;
+    --flag-red: #ce1126;
+    --bg-main: #f8fafc;
+    --card-bg: #ffffff;
+    --text-primary: #0f172a;
+    --text-muted: #64748b;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* تخصيص شريط التمرير */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* أنماط مخصصة للطباعة الرسمية A4 لضمان خروج المستند في صفحة واحدة بالضبط */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* حصر المستند في صفحة واحدة ومنع التمدد للصفحة الثانية */
+  #official-print-document,
+  #complaint-receipt-card {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+}
+
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}
+
+/* حركة رفرفة علم مصر ثلاثية الأبعاد الواقعية */
+@keyframes flag-wave {
+  0% {
+    transform: rotateY(0deg) skewY(0deg) translateZ(0px);
+  }
+  25% {
+    transform: rotateY(-7deg) skewY(2.2deg) translateZ(6px);
+  }
+  50% {
+    transform: rotateY(5deg) skewY(-1.8deg) translateZ(10px);
+  }
+  75% {
+    transform: rotateY(-5deg) skewY(1.5deg) translateZ(5px);
+  }
+  100% {
+    transform: rotateY(0deg) skewY(0deg) translateZ(0px);
+  }
+}
+
+/* تموج الضوء والظل على نسيج العلم مع حركة الرياح */
+@keyframes flag-shimmer {
+  0% {
+    background-position: 0% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* حركة ظل العلم الساقط */
+@keyframes flag-shadow {
+  0%, 100% {
+    transform: scaleX(1) scaleY(1);
+    opacity: 0.25;
+  }
+  50% {
+    transform: scaleX(0.94) scaleY(1.1) translateX(4px);
+    opacity: 0.35;
+  }
+}
+
+.animate-flag-wave {
+  animation: flag-wave 4s ease-in-out infinite;
+}
+
+.animate-flag-shimmer {
+  animation: flag-shimmer 3s linear infinite;
+}
+
+.animate-flag-shadow {
+  animation: flag-shadow 4s ease-in-out infinite;
 }
