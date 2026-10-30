@@ -40,7 +40,8 @@ import { committeesService } from '@/lib/committeesService';
 import { StatusBadge } from '@/components/StatusBadge';
 import { WhatsAppButton } from '@/components/WhatsAppButton';
 import { exportComplaintsToExcel } from '@/lib/exportExcel';
-import { generateBulkComplaintsPdf } from '@/lib/generateBulkPdf';
+import { generateBulkComplaintsPdf, printBulkComplaintsWindow } from '@/lib/generateBulkPdf';
+import { AdminCharts } from '@/components/AdminCharts';
 import { authService, AdminUser, CommitteeDef, ROLES_META } from '@/lib/auth';
 
 function AdminComplaintsContent() {
@@ -279,6 +280,27 @@ function AdminComplaintsContent() {
       console.error(err);
       alert('فشل تحويل الشكوى.');
     }
+  };
+
+  // طباعة الكشف عبر نافذة المتصفح المعتمدة فورياً
+  const handleDirectPrint = () => {
+    const listToExport = selectedIds.size > 0
+      ? filteredComplaints.filter((c) => selectedIds.has(c.id))
+      : filteredComplaints;
+
+    if (listToExport.length === 0) {
+      alert('لا توجد طلبات لطباعتها.');
+      return;
+    }
+
+    const commName = committeeFilter === 'all'
+      ? 'كافة اللجان النوعية'
+      : committees.find(c => c.id === committeeFilter)?.name || 'لجنة رعاية الشباب';
+
+    printBulkComplaintsWindow(listToExport, {
+      committeeName: commName,
+      printedBy: currentUser?.name || 'مسؤول المنظومة',
+    });
   };
 
   // تصدير PDF مجمع للكشوف
