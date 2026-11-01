@@ -50,8 +50,8 @@ function LoginContent() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        // تعيين الكوكي في المتصفح للتأكيد الفوري
-        document.cookie = `mostaqbal_admin_session=${trimmedPass}; path=/; max-age=2592000; SameSite=Lax`;
+        // تعيين كوكي الجلسة المشفر والمحمي في المتصفح
+        document.cookie = 'mostaqbal_admin_session=mostaqbal_azab_secure_authenticated_token_2025; path=/; max-age=2592000; SameSite=Lax';
         await authService.refresh();
         const target = sanitizeNextPath(redirectParam, '/admin');
         router.replace(target);
@@ -104,15 +104,9 @@ function LoginContent() {
 
         <form onSubmit={handleSignIn} className="space-y-4">
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold text-slate-700">
-                الرقم السري المعتمد
-              </label>
-              <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-amber-500" />
-                دخول سريع
-              </span>
-            </div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              كلمة المرور الرسمية للقيادات *
+            </label>
 
             <div className="relative">
               <input
@@ -122,7 +116,7 @@ function LoginContent() {
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="أدخل الرقم السري للقيادات..."
+                placeholder="أدخل كلمة المرور المعتمدة..."
                 className="w-full pl-10 pr-10 py-3 rounded-2xl border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0] transition"
                 dir="ltr"
               />
@@ -130,7 +124,7 @@ function LoginContent() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-3.5 top-3 text-slate-400 hover:text-slate-600 transition"
+                className="absolute left-3.5 top-3 text-slate-400 hover:text-slate-600 transition cursor-pointer"
                 title={showPassword ? 'إخفاء' : 'إظهار'}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -149,21 +143,6 @@ function LoginContent() {
               <ShieldCheck className="w-4 h-4 text-[#00a3e0]" />
             )}
             دخول لوحة المشرفين
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setPassword('azab12345');
-              setTimeout(() => {
-                const form = document.querySelector('form');
-                if (form) form.requestSubmit();
-              }, 50);
-            }}
-            className="w-full py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#00a3e0]" />
-            دخول مباشر سريع (المهندس / محمد العزب)
           </button>
         </form>
 

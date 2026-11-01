@@ -42,7 +42,7 @@ async function fetchProfileForCurrentSession(): Promise<AdminUser | null> {
   if (typeof document !== 'undefined') {
     const isDemoAdmin = document.cookie
       .split(';')
-      .some((c) => c.trim().startsWith('mostaqbal_admin_session='));
+      .some((c) => c.trim() === 'mostaqbal_admin_session=mostaqbal_azab_secure_authenticated_token_2025');
     if (isDemoAdmin) {
       return {
         id: 'admin-azab',

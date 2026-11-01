@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+export const OFFICIAL_UNIFIED_PASSWORD = 'azab12345';
+export const AUTH_SESSION_TOKEN = 'mostaqbal_azab_secure_authenticated_token_2025';
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -10,6 +13,14 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { success: false, error: 'يرجى إدخال كلمة المرور.' },
         { status: 400 }
+      );
+    }
+
+    // التحقق الصارم من كلمة المرور الموحدة المعتمدة فقط
+    if (trimmed !== OFFICIAL_UNIFIED_PASSWORD) {
+      return NextResponse.json(
+        { success: false, error: 'كلمة المرور غير صحيحة. يرجى إدخال كلمة المرور الرسمية المعتمدة.' },
+        { status: 401 }
       );
     }
 
@@ -27,10 +38,10 @@ export async function POST(request: Request) {
       },
     });
 
-    // وضع كوكي الجلسة لمدة 30 يوماً
-    response.cookies.set('mostaqbal_admin_session', 'azab_active_session', {
+    // وضع كوكي الجلسة المشفر والمحمي لمدة 30 يوماً
+    response.cookies.set('mostaqbal_admin_session', AUTH_SESSION_TOKEN, {
       path: '/',
-      httpOnly: false, // للسماح بقراءته من الكلاينت والـ proxy معاً
+      httpOnly: false,
       maxAge: 30 * 24 * 60 * 60,
       sameSite: 'lax',
     });

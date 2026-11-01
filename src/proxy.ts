@@ -21,9 +21,9 @@ export async function proxy(request: NextRequest) {
   loginUrl.pathname = '/login';
   loginUrl.search = `?next=${encodeURIComponent(`${pathname}${search}`)}`;
 
-  // الدخول السريع لقيادات الأمانة برمز المرور المعتمد
+  // التحقق الحصري من جلسة الدخول المعتمدة بكلمة السر الرسمية
   const adminSession = request.cookies.get('mostaqbal_admin_session')?.value;
-  if (adminSession) {
+  if (adminSession === 'mostaqbal_azab_secure_authenticated_token_2025') {
     return NextResponse.next({ request });
   }
 

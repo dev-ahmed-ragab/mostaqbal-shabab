@@ -60,7 +60,7 @@ export async function getSessionProfile(): Promise<AdminUser | null> {
   try {
     const cookieStore = await cookies();
     const demoCookie = cookieStore.get('mostaqbal_admin_session')?.value;
-    if (demoCookie) {
+    if (demoCookie === 'mostaqbal_azab_secure_authenticated_token_2025') {
       return {
         id: 'admin-azab',
         email: 'elazab@mostaqbal-watan.org',
