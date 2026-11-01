@@ -105,8 +105,8 @@ export async function generateSingleComplaintPdf(complaint: Complaint): Promise<
       <!-- خانات التوقيعات والاعتماد الرسمي -->
       <div style="border-top: 2px solid #133063; padding-top: 12px; display: flex; justify-content: space-between; text-align: center; font-size: 9px; font-weight: bold;">
         <div style="flex: 1;">
-          <span style="color: #133063; display: block; margin-bottom: 22px;">أمين مساعد تنفيذي</span>
-          <span style="color: #475569; font-weight: normal;">( م. محمود الجزار )</span>
+          <span style="color: #133063; display: block; margin-bottom: 22px;">أمين الشباب بالمركز</span>
+          <span style="color: #475569; font-weight: normal;">( المهندس / محمد العزب )</span>
         </div>
         <div style="flex: 1;">
           <span style="color: #133063; display: block; margin-bottom: 4px;">خاتم الاعتماد الرسمي</span>
@@ -115,12 +115,12 @@ export async function generateSingleComplaintPdf(complaint: Complaint): Promise<
           </div>
         </div>
         <div style="flex: 1;">
-          <span style="color: #133063; display: block; margin-bottom: 22px;">أمين رعاية الشباب ببركة السبع</span>
-          <span style="color: #475569; font-weight: normal;">( أ. سامر التلاوي )</span>
+          <span style="color: #133063; display: block; margin-bottom: 22px;">أمين التنظيم بالمركز</span>
+          <span style="color: #475569; font-weight: normal;">( الأستاذ / محمود الجزار )</span>
         </div>
         <div style="flex: 1;">
-          <span style="color: #133063; display: block; margin-bottom: 22px;">أمين التنظيم بالمحافظة</span>
-          <span style="color: #475569; font-weight: normal;">( المحاسب / محمد بط )</span>
+          <span style="color: #133063; display: block; margin-bottom: 22px;">أمين مركز بركة السبع</span>
+          <span style="color: #475569; font-weight: normal;">( الأستاذ / محمد هلال )</span>
         </div>
       </div>
 

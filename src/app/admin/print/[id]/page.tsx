@@ -346,9 +346,9 @@ function PrintComplaintContent() {
         {/* خانات الاعتماد والتوقيعات والأختام الرسمية */}
         <div className="grid grid-cols-3 gap-3 text-center text-[10px] font-bold pt-2 border-t-2 border-black">
           <div className="space-y-4">
-            <span>أمين مساعد تنفيذي</span>
+            <span>أمين الشباب بالمركز</span>
             <span className="block text-[9px] text-slate-500 font-normal">
-              ( م. محمود الجزار )
+              ( المهندس / محمد العزب )
             </span>
           </div>
 
@@ -360,9 +360,9 @@ function PrintComplaintContent() {
           </div>
 
           <div className="space-y-4">
-            <span>أمين الشباب ببركة السبع</span>
+            <span>أمين التنظيم بالمركز</span>
             <span className="block text-[9px] text-slate-500 font-normal">
-              ( أ. سامر التلاوي )
+              ( الأستاذ / محمود الجزار )
             </span>
           </div>
         </div>

@@ -35,47 +35,35 @@ interface LeaderMember {
 
 const LEADERS_DATA: LeaderMember[] = [
   {
-    id: 'batt',
-    name: 'المحاسب / محمد بط',
-    title: 'أمين التنظيم بحزب مستقبل وطن - محافظة المنوفية',
-    roleDescription: 'الإشراف التنظيمي العام على الهيكل الحزبي والأمانات النوعية بمحافظة المنوفية، وتنسيق الجهود لدعم الشباب والمواطنين بكافة المراكز.',
-    badge: 'أمانة التنظيم بالمحافظة',
-    avatarSrc: '/leaders/avatar-batt.jpg',
-    fullSrc: '/leaders/full-batt.jpg',
-    facebookUrl: 'https://facebook.com/mohamed.batt.official',
-    organization: 'أمانة حزب مستقبل وطن بمحافظة المنوفية',
-    locationScope: 'أمانة المحافظة'
-  },
-  {
     id: 'talawe',
-    name: 'أ. سامر التلاوي',
-    title: 'أمين الشباب بمركز بركة السبع',
-    roleDescription: 'قيادة أمانة الشباب وتوجيه سياسات الدعم الشبابي والرياضي بمركز بركة السبع، واعتماد القرارات والتأشيرات الرسمية لمطالب وشكاوى المواطنين.',
-    badge: 'أمين الأمانة - اعتماد نهائي',
+    name: 'النائب / سامر التلاوي',
+    title: 'أمين المحافظة بحزب مستقبل وطن',
+    roleDescription: 'الإشراف العام على إدارة وتوجيه السياسات العامة للحزب في نطاق المحافظة، ومتابعة تنفيذ القرارات التنظيمية والتنسيق بين مختلف الأمانات.',
+    badge: 'أمين المحافظة',
     avatarSrc: '/leaders/avatar-talawe.jpg',
     fullSrc: '/leaders/full-talawe.jpg',
     facebookUrl: 'https://facebook.com/samer.talawe.official',
-    organization: 'حزب مستقبل وطن - أمانة مركز بركة السبع',
-    locationScope: 'أمانة مركز بركة السبع'
+    organization: 'حزب مستقبل وطن - أمانة محافظة المنوفية',
+    locationScope: 'أمانة المحافظة'
   },
   {
-    id: 'gazzar',
-    name: 'م. محمود الجزار',
-    title: 'أمين مساعد بأمانة الشباب بمركز بركة السبع',
-    roleDescription: 'المتابعة التنفيذية المباشرة لملفات الشكاوى والمقترحات اليومية، والتنسيق الميداني مع الأجهزة التنفيذية ومراكز الشباب بقرى ومركز بركة السبع والمحافظة.',
-    badge: 'أمين مساعد تنفيذي',
-    avatarSrc: '/leaders/avatar-gazzar.jpg',
-    fullSrc: '/leaders/full-gazzar.jpg',
-    facebookUrl: 'https://facebook.com/mahmoud.elgazzar.official',
-    organization: 'حزب مستقبل وطن - أمانة مركز بركة السبع',
-    locationScope: 'أمانة مركز بركة السبع'
+    id: 'batt',
+    name: 'المحاسب / محمد بط',
+    title: 'أمين التنظيم بالمحافظة',
+    roleDescription: 'التخطيط والمتابعة الهيكلية لشؤون العضوية والأمانات الفرعية، وإدارة العمليات التنظيمية وحشد الكوادر على مستوى المحافظة.',
+    badge: 'أمين التنظيم بالمحافظة',
+    avatarSrc: '/leaders/avatar-batt.jpg',
+    fullSrc: '/leaders/full-batt.jpg',
+    facebookUrl: 'https://facebook.com/mohamed.batt.official',
+    organization: 'حزب مستقبل وطن - أمانة محافظة المنوفية',
+    locationScope: 'أمانة المحافظة'
   },
   {
     id: 'helal',
-    name: 'أ. محمد هلال',
-    title: 'قيادي ومسؤول تنفيذي بأمانة الشباب',
-    roleDescription: 'التنسيق الميداني والمتابعة التنظيمية لفعاليات وأنشطة قطاع الشباب والمبادرات المجتمعية ورعاية المواهب والكوادر بمركز بركة السبع.',
-    badge: 'قيادي تنفيذي معتمد',
+    name: 'الأستاذ / محمد هلال',
+    title: 'أمين مركز بركة السبع',
+    roleDescription: 'قيادة العمل الحزبي الميداني داخل المركز، والإشراف على تنفيذ خطط وأنشطة الأمانات المختلفة في النطاق المحلي.',
+    badge: 'أمين المركز',
     avatarSrc: '/leaders/avatar-helal.jpg',
     fullSrc: '/leaders/full-helal.jpg',
     facebookUrl: 'https://facebook.com/mohamed.helal.official',
@@ -83,11 +71,23 @@ const LEADERS_DATA: LeaderMember[] = [
     locationScope: 'أمانة مركز بركة السبع'
   },
   {
+    id: 'gazzar',
+    name: 'الأستاذ / محمود الجزار',
+    title: 'أمين التنظيم بمركز بركة السبع',
+    roleDescription: 'تنظيم الصفوف وإدارة قاعدة بيانات الأعضاء بالمركز، وتشكيل الوحدات الحزبية وتنسيق الفعاليات التنظيمية الداخلية.',
+    badge: 'أمين التنظيم بالمركز',
+    avatarSrc: '/leaders/avatar-gazzar.jpg',
+    fullSrc: '/leaders/full-gazzar.jpg',
+    facebookUrl: 'https://facebook.com/mahmoud.elgazzar.official',
+    organization: 'حزب مستقبل وطن - أمانة مركز بركة السبع',
+    locationScope: 'أمانة مركز بركة السبع'
+  },
+  {
     id: 'azab',
-    name: 'أ. محمد العزب',
-    title: 'عضو هيئة مكتب أمانة الشباب ومسؤول المتابعة الميدانية',
-    roleDescription: 'التواصل المباشر مع شباب القرى والمراكز وتلقي الاحتياجات العاجلة وتنظيم المعاينات الميدانية للملاعب والمنشآت بمركز بركة السبع.',
-    badge: 'متابعة وتنسيق ميداني',
+    name: 'المهندس / محمد العزب',
+    title: 'أمين الشباب بمركز بركة السبع',
+    roleDescription: 'تفعيل دور الشباب وإدماجهم في المبادرات والفعاليات الحزبية، وتمثيل قضاياهم وتطوير مهارات القيادة لديهم بالمركز.',
+    badge: 'أمين الشباب بالمركز',
     avatarSrc: '/leaders/avatar-azab.jpg',
     fullSrc: '/leaders/full-azab.jpg',
     facebookUrl: 'https://facebook.com/mohamed.elazab.official',
@@ -137,11 +137,10 @@ export default function CommitteeLeadersPage() {
         </div>
 
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#133063] mb-3 tracking-tight">
-          قيادات وأعضاء أمانة الشباب
+          قيادات وأعضاء أمانة الحزب بالمركز والمحافظة
         </h1>
         <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-          فريق العمل والقيادات التنفيذية المسؤولة عن دراسة ومتابعة طلبات وشكاوى قطاع الشباب،
-          والعمل الميداني المستمر على تذليل كافة العقبات وخدمة أهالينا بمركز وقرى بركة السبع ومحافظة المنوفية.
+          القيادات والتشكيلات الحزبية المسؤولة عن توجيه السياسات، المتابعة التنظيمية والميدانية، وتفعيل دور الشباب وخدمة أهالينا بمركز بركة السبع ومحافظة المنوفية.
         </p>
       </div>
 

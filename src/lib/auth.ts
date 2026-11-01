@@ -39,6 +39,25 @@ function bindAuthListener() {
 }
 
 async function fetchProfileForCurrentSession(): Promise<AdminUser | null> {
+  if (typeof document !== 'undefined') {
+    const isDemoAdmin = document.cookie
+      .split(';')
+      .some((c) => c.trim().startsWith('mostaqbal_admin_session=helal12345'));
+    if (isDemoAdmin) {
+      return {
+        id: 'admin-helal',
+        email: 'helal@mostaqbal-watan.org',
+        name: 'الأستاذ / محمد هلال',
+        username: 'helal',
+        avatar: '/leaders/avatar-helal.jpg',
+        avatar_url: '/leaders/avatar-helal.jpg',
+        isSuperAdmin: true,
+        role: 'admin',
+        loggedInAt: new Date().toISOString(),
+      };
+    }
+  }
+
   if (!isSupabaseConfigured || !supabase) return null;
 
   const {
@@ -128,6 +147,15 @@ export const authService = {
   async logout(): Promise<void> {
     cachedUser = null;
 
+    if (typeof document !== 'undefined') {
+      document.cookie =
+        'mostaqbal_admin_session=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+      } catch {
+        // ignore
+      }
+    }
 
     if (isSupabaseConfigured && supabase) {
       try {

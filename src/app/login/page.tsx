@@ -6,80 +6,62 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ShieldCheck,
-  Mail,
   Lock,
   ArrowRight,
   Loader2,
   AlertCircle,
+  Eye,
+  EyeOff,
+  Sparkles,
 } from 'lucide-react';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
-import {
-  homePathForRole,
-  sanitizeNextPath,
-  type UserRole,
-} from '@/lib/auth/types';
-
-function destinationFor(_role: UserRole, rawNext: string | null): string {
-  const home = '/admin';
-  const safe = sanitizeNextPath(rawNext, home);
-  return safe;
-}
-
-async function readRole(_userId: string): Promise<UserRole> {
-  return 'admin';
-}
+import { authService } from '@/lib/auth';
+import { sanitizeNextPath } from '@/lib/auth/types';
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get('next');
-  const callbackError = searchParams.get('error');
 
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(() => {
-    switch (callbackError) {
-      case 'auth_failed':
-        return 'تعذّر تأكيد رابط الدخول. يرجى تسجيل الدخول بالبريد وكلمة المرور.';
-      case 'missing_code':
-        return 'رابط الدخول غير مكتمل. يرجى إعادة المحاولة.';
-      case 'not_configured':
-        return 'خدمة الدخول غير مهيأة على الخادم. يرجى التواصل مع مسؤول المنظومة.';
-      default:
-        return null;
-    }
-  });
-
-  const ensureConfigured = () => {
-    if (!isSupabaseConfigured || !supabase) {
-      setErrorMsg('خدمة الدخول غير مهيأة حالياً. يرجى التواصل مع مسؤول المنظومة.');
-      setIsLoading(false);
-      return false;
-    }
-    return true;
-  };
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
-    if (!ensureConfigured() || !supabase) return;
+    const trimmedPass = password.trim();
+    if (!trimmedPass) {
+      setErrorMsg('يرجى إدخال الرقم السري.');
+      return;
+    }
 
     setIsLoading(true);
+
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
+      // إرسال كلمة المرور للتحقق وتعيين كوكي الجلسة الآمن
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: trimmedPass }),
       });
-      if (error || !data.user) {
-        throw new Error('invalid');
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        // تعيين الكوكي في المتصفح للتأكيد الفوري
+        document.cookie = `mostaqbal_admin_session=${trimmedPass}; path=/; max-age=2592000; SameSite=Lax`;
+        await authService.refresh();
+        const target = sanitizeNextPath(redirectParam, '/admin');
+        router.replace(target);
+        router.refresh();
+        return;
       }
-      router.replace(destinationFor('admin', redirectParam));
-      router.refresh();
+
+      setErrorMsg(data.error || 'الرقم السري غير صحيح. يرجى إدخال كلمة المرور المعتمدة للقيادات.');
     } catch {
-      setErrorMsg('البريد الإلكتروني أو كلمة المرور غير صحيحة، أو الحساب غير مفعّل.');
+      setErrorMsg('حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة مرة أخرى.');
     } finally {
       setIsLoading(false);
     }
@@ -103,18 +85,18 @@ function LoginContent() {
             />
           </div>
           <span className="text-xs font-bold text-[#00a3e0] tracking-wider block">
-            حزب مستقبل وطن
+            حزب مستقبل وطن • أمانة مركز بركة السبع
           </span>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-[#133063] mt-0.5">
-            تسجيل دخول الإدارة
+          <h2 className="text-xl sm:text-2xl font-extrabold text-[#133063] mt-1">
+            تسجيل دخول القيادات
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            دخول فريق العمل إلى لوحة المشرفين.
+            الدخول المباشر إلى لوحة إدارة ومتابعة الشكاوى الميدانية.
           </p>
         </div>
 
         {errorMsg && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2">
+          <div className="mb-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5 font-bold animate-in fade-in">
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
             <span>{errorMsg}</span>
           </div>
@@ -122,54 +104,51 @@ function LoginContent() {
 
         <form onSubmit={handleSignIn} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              البريد الإلكتروني
-            </label>
-            <div className="relative">
-              <input
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="w-full pl-3 pr-10 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0]"
-                dir="ltr"
-              />
-              <Mail className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold text-slate-700">
+                الرقم السري المعتمد
+              </label>
+              <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-amber-500" />
+                دخول سريع
+              </span>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              كلمة المرور
-            </label>
             <div className="relative">
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
+                autoFocus
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full pl-3 pr-10 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0]"
+                placeholder="أدخل الرقم السري للقيادات..."
+                className="w-full pl-10 pr-10 py-3 rounded-2xl border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0] transition"
                 dir="ltr"
               />
-              <Lock className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
+              <Lock className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute left-3.5 top-3 text-slate-400 hover:text-slate-600 transition"
+                title={showPassword ? 'إخفاء' : 'إظهار'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#133063] hover:bg-[#0d234a] text-white font-bold text-xs shadow-md transition active:scale-[0.99] disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#133063] hover:bg-[#0d234a] text-white font-bold text-xs shadow-md transition active:scale-[0.99] disabled:opacity-50 cursor-pointer"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <ShieldCheck className="w-4 h-4 text-[#00a3e0]" />
             )}
-            دخول المنظومة
+            دخول لوحة المشرفين
           </button>
         </form>
 

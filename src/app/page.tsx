@@ -186,6 +186,10 @@ export default function HomePage() {
               <span className="text-xs text-slate-500 font-semibold mt-1">
                 أمانة مركز بركة السبع • محافظة المنوفية
               </span>
+              <div className="mt-3 pt-3 border-t border-slate-200/80 w-full text-center">
+                <span className="text-[11px] font-bold text-slate-500 block">أمين الشباب بالمركز</span>
+                <strong className="text-sm font-black text-[#133063] block">المهندس / محمد العزب</strong>
+              </div>
             </div>
 
             {/* التعريف والركائز الثلاث المبسطة */}

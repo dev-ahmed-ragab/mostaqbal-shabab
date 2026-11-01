@@ -42,6 +42,9 @@ function FooterInner() {
                 </div>
                 <h3 className="text-base font-extrabold text-white">أمانة الشباب</h3>
                 <p className="text-[11px] text-slate-400 font-semibold">محافظة المنوفية</p>
+                <p className="text-xs text-amber-300 font-bold mt-1">
+                  أمين الشباب بالمركز: المهندس / محمد العزب
+                </p>
               </div>
             </div>
 
@@ -101,16 +104,12 @@ function FooterInner() {
                 <MapPin className="w-4 h-4 text-[#00a3e0] shrink-0 mt-0.5" />
                 <span>
                   <strong className="text-slate-200 block text-[11px]">مقر أمانة حزب مستقبل وطن بمركز بركة السبع:</strong>
-                  بركة السبع - محافظة المنوفية (بجوار مجلس المدينة)
+                  مركز بركة السبع - بجوار كافيه كارليتوس - محافظة المنوفية
                 </span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-[#00a3e0] shrink-0" />
-                <span dir="ltr" className="font-mono text-slate-200">048 222 4567 / 010 0345 6789</span>
-              </li>
-              <li className="flex items-center gap-2.5">
-                <Mail className="w-4 h-4 text-[#00a3e0] shrink-0" />
-                <span className="font-mono text-slate-200">shabab@mostaqbal-watan.org</span>
+                <span dir="ltr" className="font-mono text-slate-200">01012920967 / 01004744265</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Globe className="w-4 h-4 text-[#00a3e0] shrink-0" />

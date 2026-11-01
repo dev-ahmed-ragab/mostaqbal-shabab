@@ -127,6 +127,9 @@ function NavbarInner() {
               <span className="block text-sm sm:text-base font-black text-[#133063] group-hover:text-[#00a3e0] transition leading-tight">
                 أمانة الشباب
               </span>
+              <span className="block text-[10px] sm:text-[11px] font-bold text-slate-500 leading-tight mt-0.5">
+                أمـين الشباب: م. محمد العزب
+              </span>
             </div>
           </Link>
 
