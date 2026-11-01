@@ -37,12 +37,23 @@ function NavbarInner() {
 
   useEffect(() => {
     let active = true;
-    authService.refresh().then((user) => {
-      if (active) setCurrentUser(user);
-    });
 
+    // جلب حالة تسجيل الدخول الحالية فور تحميل الصفحة
+    const checkAuth = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        if (active) setCurrentUser(user);
+      } catch {
+        if (active) setCurrentUser(null);
+      }
+    };
+    checkAuth();
+
+    // الاشتراك في تغييرات حالة المصادقة
     const unsubscribe = authService.subscribe(() => {
-      setCurrentUser(authService.getCurrentUser());
+      if (active) {
+        checkAuth();
+      }
     });
 
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -59,7 +70,7 @@ function NavbarInner() {
     };
   }, []);
 
-  // إغلاق قائمة المستخدم تلقائياً عند التمرير (التحرك) لتفادي تغطية المحتوى
+  // إغلاق قائمة المستخدم تلقائياً عند التمرير
   useEffect(() => {
     const handleScroll = () => {
       if (userMenuOpen) {
@@ -93,6 +104,7 @@ function NavbarInner() {
     router.refresh();
   };
 
+  // قائمة الروابط في النافبار (تم إزالة الـ QR بناءً على طلب المستخدم)
   const navLinks = [
     { href: '/', label: 'الرئيسية', icon: Home },
     { href: '/submit', label: 'تقديم طلب جديد', icon: FilePlus },
@@ -106,10 +118,12 @@ function NavbarInner() {
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-2xs no-print">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-18 sm:h-20">
-          <Link href="/" className="flex items-center gap-3 group shrink-0">
-            <div className="relative w-11 h-13 sm:w-13 sm:h-16 shrink-0 transition-transform group-hover:scale-105">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-2">
+          
+          {/* الشعار والهوية - متجاوب بدقة حتى للشاشات الصغيرة جداً أقل من 300px */}
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 group shrink min-w-0">
+            <div className="relative w-9 h-11 sm:w-13 sm:h-16 shrink-0 transition-transform group-hover:scale-105">
               <Image
                 src="/logo.png"
                 alt="شعار حزب مستقبل وطن"
@@ -120,19 +134,20 @@ function NavbarInner() {
                 unoptimized
               />
             </div>
-            <div className="border-r border-slate-200 pr-3">
-              <span className="block text-[11px] sm:text-xs font-bold text-[#00a3e0] tracking-wide">
+            <div className="border-r border-slate-200 pr-2 sm:pr-3 min-w-0">
+              <span className="hidden min-[360px]:block text-[10px] sm:text-xs font-bold text-[#00a3e0] tracking-wide truncate">
                 حزب مستقبل وطن • بركة السبع
               </span>
-              <span className="block text-sm sm:text-base font-black text-[#133063] group-hover:text-[#00a3e0] transition leading-tight">
+              <span className="block text-xs sm:text-base font-black text-[#133063] group-hover:text-[#00a3e0] transition leading-tight truncate">
                 أمانة الشباب
               </span>
-              <span className="block text-[10px] sm:text-[11px] font-bold text-slate-500 leading-tight mt-0.5">
+              <span className="hidden sm:block text-[10px] sm:text-[11px] font-bold text-slate-500 leading-tight mt-0.5 truncate">
                 أمـين الشباب: م. محمد العزب
               </span>
             </div>
           </Link>
 
+          {/* روابط الديسكتوب فقط */}
           <nav className="hidden lg:flex items-center gap-1.5">
             {navLinks.map((link) => {
               const Icon = link.icon;
@@ -154,7 +169,9 @@ function NavbarInner() {
             })}
           </nav>
 
-          <div className="flex items-center gap-2.5">
+          {/* الإجراءات على اليسار */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* زر التثبيت في الديسكتوب فقط */}
             {isInstallable && (
               <button
                 type="button"
@@ -166,12 +183,13 @@ function NavbarInner() {
               </button>
             )}
 
+            {/* حالة المستخدم المسجل (قائمة المشرف) */}
             {currentUser ? (
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl border-2 border-[#133063]/20 hover:border-[#00a3e0] bg-white transition-all flex items-center justify-center p-0.5 cursor-pointer shadow-2xs group"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl border-2 border-[#133063]/20 hover:border-[#00a3e0] bg-white transition-all flex items-center justify-center p-0.5 cursor-pointer shadow-2xs group"
                   aria-expanded={userMenuOpen}
                   title={`${currentUser.name} (لوحة التحكم)`}
                 >
@@ -251,15 +269,17 @@ function NavbarInner() {
                 )}
               </div>
             ) : (
+              /* زر تسجيل الدخول يظهر فقط في الشاشات العريضة (Desktop / Tablet) ولا يزاحم الموبايل */
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[#133063] hover:bg-[#0d234a] text-white text-xs sm:text-sm font-bold shadow-sm hover:shadow-md transition active:scale-95"
+                className="hidden sm:inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[#133063] hover:bg-[#0d234a] text-white text-xs sm:text-sm font-bold shadow-sm hover:shadow-md transition active:scale-95"
               >
                 <LogIn className="w-4 h-4 text-[#00a3e0] shrink-0" />
                 <span>تسجيل الدخول</span>
               </Link>
             )}
 
+            {/* زر القائمة للشاشات المتوسطة والصغيرة */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -272,6 +292,7 @@ function NavbarInner() {
         </div>
       </div>
 
+      {/* القائمة المنسدلة للشاشات الصغيرة والموبايل */}
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-2 shadow-xl animate-in slide-in-from-top-2 duration-200">
           {navLinks.map((link) => {
@@ -294,6 +315,7 @@ function NavbarInner() {
             );
           })}
 
+          {/* قسم الأزرار المخصصة للموبايل (تسجيل الدخول والتثبيت مدمجين هنا) */}
           <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
             {isInstallable && (
               <button
@@ -306,19 +328,28 @@ function NavbarInner() {
               </button>
             )}
 
+            {/* زر تسجيل الدخول المباشر داخل القائمة للموبايل */}
             <Link
               href={accountHref}
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#133063] text-white text-xs font-bold shadow-md"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#133063] hover:bg-[#0d234a] text-white text-xs sm:text-sm font-bold shadow-md transition"
             >
               {!currentUser ? (
-                <LogIn className="w-4 h-4 text-[#00a3e0]" />
+                <>
+                  <LogIn className="w-4 h-4 text-sky-300" />
+                  <span>تسجيل الدخول</span>
+                </>
               ) : isStaff ? (
-                <LayoutDashboard className="w-4 h-4 text-[#00a3e0]" />
+                <>
+                  <LayoutDashboard className="w-4 h-4 text-sky-300" />
+                  <span>لوحة المشرفين</span>
+                </>
               ) : (
-                <UserCircle className="w-4 h-4 text-[#00a3e0]" />
+                <>
+                  <UserCircle className="w-4 h-4 text-sky-300" />
+                  <span>حسابي</span>
+                </>
               )}
-              {accountLabel}
             </Link>
 
             {currentUser && (
@@ -340,7 +371,7 @@ function NavbarInner() {
 
 export const Navbar: React.FC = () => {
   return (
-    <Suspense fallback={<header className="h-20 bg-white border-b border-slate-200/80" />}>
+    <Suspense fallback={<header className="h-16 sm:h-20 bg-white border-b border-slate-200/80" />}>
       <NavbarInner />
     </Suspense>
   );

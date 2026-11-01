@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import AdminLayoutClient from './AdminLayoutClient';
-import { requireUser } from '@/lib/supabase/server';
+import { requireAdmin } from '@/lib/supabase/server';
 
 export default function AdminLayout({
   children,
@@ -25,6 +25,6 @@ export default function AdminLayout({
 
 async function AdminGuard({ children }: { children: React.ReactNode }) {
   // حارس على الخادم: لا يمكن الوصول للوحة بمجرد التلاعب بحالة المتصفح.
-  const user = await requireUser('/admin');
+  const user = await requireAdmin('/admin');
   return <AdminLayoutClient user={user}>{children}</AdminLayoutClient>;
 }

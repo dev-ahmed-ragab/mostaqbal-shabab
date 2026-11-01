@@ -12,7 +12,6 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
-  Sparkles,
 } from 'lucide-react';
 import { authService } from '@/lib/auth';
 import { sanitizeNextPath } from '@/lib/auth/types';
@@ -33,14 +32,15 @@ function LoginContent() {
 
     const trimmedPass = password.trim();
     if (!trimmedPass) {
-      setErrorMsg('يرجى إدخال الرقم السري.');
+      setErrorMsg('يرجى إدخال كلمة المرور.');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // إرسال كلمة المرور للتحقق وتعيين كوكي الجلسة الآمن
+      // التحقق يتم على الخادم مقابل كلمة سر واحدة، والجلسة تُخزَّن في كوكي
+      // HttpOnly موقّعة. لا يوجد بريد إلكتروني ولا اسم مستخدم.
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -50,8 +50,6 @@ function LoginContent() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        // تعيين كوكي الجلسة المشفر والمحمي في المتصفح
-        document.cookie = 'mostaqbal_admin_session=mostaqbal_azab_secure_authenticated_token_2025; path=/; max-age=2592000; SameSite=Lax';
         await authService.refresh();
         const target = sanitizeNextPath(redirectParam, '/admin');
         router.replace(target);
@@ -59,7 +57,7 @@ function LoginContent() {
         return;
       }
 
-      setErrorMsg(data.error || 'الرقم السري غير صحيح. يرجى إدخال كلمة المرور المعتمدة للقيادات.');
+      setErrorMsg(data.error || 'كلمة المرور غير صحيحة.');
     } catch {
       setErrorMsg('حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة مرة أخرى.');
     } finally {
@@ -105,7 +103,7 @@ function LoginContent() {
         <form onSubmit={handleSignIn} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              كلمة المرور الرسمية للقيادات *
+              كلمة المرور *
             </label>
 
             <div className="relative">
@@ -116,7 +114,7 @@ function LoginContent() {
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="أدخل كلمة المرور المعتمدة..."
+                placeholder="أدخل كلمة المرور..."
                 className="w-full pl-10 pr-10 py-3 rounded-2xl border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0] transition"
                 dir="ltr"
               />

@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS public.complaints (
   tracking_code TEXT NOT NULL UNIQUE,
   citizen_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   citizen_name TEXT NOT NULL,
-  national_id TEXT NOT NULL,
+  national_id TEXT,
   primary_phone TEXT NOT NULL,
   alt_contacts JSONB NOT NULL DEFAULT '[]'::jsonb,
 
@@ -666,11 +666,39 @@ DECLARE
   v_row public.complaints%ROWTYPE;
 BEGIN
   IF coalesce(btrim(p_citizen_name), '') = ''
-    OR coalesce(btrim(p_national_id), '') = ''
     OR coalesce(btrim(p_primary_phone), '') = ''
     OR coalesce(btrim(p_title), '') = ''
     OR coalesce(btrim(p_description), '') = '' THEN
     RAISE EXCEPTION 'بيانات الطلب غير مكتملة' USING ERRCODE = '22023';
+  END IF;
+
+  -- حدود الطول: تمنع إغراق الجدول بحقول ضخمة أو JSONB غير محدود.
+  IF length(btrim(p_citizen_name)) > 150
+    OR length(btrim(p_title)) > 300
+    OR length(btrim(p_description)) > 10000
+    OR length(coalesce(btrim(p_location_address), '')) > 300
+    OR length(btrim(p_primary_phone)) > 20
+    OR length(coalesce(btrim(p_national_id), '')) > 14 THEN
+    RAISE EXCEPTION 'تجاوز أحد الحقول الحد الأقصى للطول' USING ERRCODE = '22001';
+  END IF;
+
+  IF btrim(p_primary_phone) !~ '^01[0125][0-9]{8}$' THEN
+    RAISE EXCEPTION 'رقم الهاتف غير صالح' USING ERRCODE = '22023';
+  END IF;
+
+  IF coalesce(btrim(p_national_id), '') <> ''
+    AND btrim(p_national_id) !~ '^[0-9]{14}$' THEN
+    RAISE EXCEPTION 'الرقم القومي غير صالح' USING ERRCODE = '22023';
+  END IF;
+
+  IF jsonb_typeof(coalesce(p_alt_contacts, '[]'::jsonb)) <> 'array'
+    OR jsonb_array_length(coalesce(p_alt_contacts, '[]'::jsonb)) > 5 THEN
+    RAISE EXCEPTION 'بيانات التواصل الإضافية غير صالحة' USING ERRCODE = '22023';
+  END IF;
+
+  IF jsonb_typeof(coalesce(p_attachments, '[]'::jsonb)) <> 'array'
+    OR jsonb_array_length(coalesce(p_attachments, '[]'::jsonb)) > 5 THEN
+    RAISE EXCEPTION 'عدد المرفقات غير صالح' USING ERRCODE = '22023';
   END IF;
 
   INSERT INTO public.complaints (
@@ -682,7 +710,7 @@ BEGIN
   ) VALUES (
     auth.uid(),
     btrim(p_citizen_name),
-    btrim(p_national_id),
+    nullif(btrim(p_national_id), ''),
     btrim(p_primary_phone),
     coalesce(p_alt_contacts, '[]'::jsonb),
     btrim(p_title),
@@ -783,8 +811,8 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  IF NOT public.is_admin() THEN
-    RAISE EXCEPTION 'غير مصرح' USING ERRCODE = '42501';
+  IF NOT public.is_super_admin() THEN
+    RAISE EXCEPTION 'غير مصرح: صلاحية المشرف العام مطلوبة' USING ERRCODE = '42501';
   END IF;
 
   IF p_target = auth.uid() THEN
@@ -842,131 +870,17 @@ CREATE POLICY "Staff Read complaint-media"
   USING (bucket_id = 'complaint-media' AND public.is_staff());
 
 -- ------------------------------------------------------------------------------
--- 15. بيانات تجريبية (اختياري)
---     احذف هذا القسم بالكامل قبل النشر الفعلي.
+-- 15. لا توجد بيانات تجريبية: لا تُدرج أي PII وهمية في قاعدة البيانات أو حزمة العميل.
 -- ------------------------------------------------------------------------------
-INSERT INTO public.complaints (
-  tracking_code, citizen_name, national_id, primary_phone, alt_contacts,
-  title, description, status, committee_id, committee_name, category,
-  location_address, admin_notes, public_response, created_at
-) VALUES
-(
-  'SH-1030-01',
-  'أحمد محمود إبراهيم',
-  '29510151234567',
-  '01012345678',
-  '[{"type": "whatsapp", "value": "01012345678"}]'::jsonb,
-  'طلب دعم وتجهيز ملتقى توظيف شباب الخريجين',
-  'نرجو من أمانة الشباب الموقرة التنسيق لتنظيم ملتقى توظيف مصغر بالتعاون مع شركات القطاع الخاص لتوفير فرص عمل لشباب الدائرة.',
-  'under_review',
-  'youth',
-  'أمانة الشباب',
-  'التوظيف وريادة الأعمال',
-  'مركز شباب المدينة - الصالة المغطاة',
-  'تم إحالة الموضوع لمقرر أمانة الشباب للتنسيق مع الشركات الراعية.',
-  'تمت إحالة الطلب للأمانة المختصة وجاري التنسيق مع الشركات.',
-  NOW() - INTERVAL '2 hours'
-),
-(
-  'SH-1030-02',
-  'سارة عبد الرحمن يوسف',
-  '29805201234568',
-  '01123456789',
-  '[{"type": "whatsapp", "value": "01123456789"}, {"type": "email", "value": "sara.youssef@example.com"}]'::jsonb,
-  'صيانة ملعب كرة القدم وتوفير إضاءة كاشفة',
-  'أعمدة الإنارة في الملعب الخماسي معطلة منذ أسبوع والشباب لا يستطيعون ممارسة الأنشطة الرياضية ليلاً، نرجو الصيانة العاجلة.',
-  'in_progress',
-  'youth',
-  'أمانة الشباب',
-  'الأنشطة الرياضية',
-  'ملعب قرية الأمل الرياضي',
-  'تم التواصل مع فني الكهرباء وتوفير الكشافات، جاري التركيب غداً.',
-  NULL,
-  NOW() - INTERVAL '5 hours'
-),
-(
-  'SH-1029-01',
-  'محمد السيد الشناوي',
-  '29203101234569',
-  '01234567890',
-  '[{"type": "phone", "value": "01512345678"}]'::jsonb,
-  'إنشاء دورة تدريبية مجانية في البرمجة والذكاء الاصطناعي',
-  'مقترح لإطلاق مبادرة لتأهيل 50 شاباً وفتاة في مهارات العمل الحر والبرمجة بالتعاون مع مدربين متطوعين.',
-  'resolved',
-  'youth',
-  'أمانة الشباب',
-  'التدريب والتأهيل',
-  'مقر قاعة المؤتمرات',
-  'تمت الموافقة وتدشين الدورة التدريبية يوم السبت القادم بحضور 60 متدرباً.',
-  'تمت الموافقة على المبادرة وبدء التسجيل.',
-  NOW() - INTERVAL '1 day'
-),
-(
-  'SH-1028-03',
-  'خالد مصطفى علام',
-  '29007081234570',
-  '01098765432',
-  '[]'::jsonb,
-  'طلب توفير أدوات رياضية لفريق تنس الطاولة',
-  'فريق الناشئين حقق المركز الأول على مستوى المنطقة ويحتاج مضارب وكرات تدريبية إضافية للاستعداد للبطولة القادمة.',
-  'new',
-  'youth',
-  'أمانة الشباب',
-  'الأنشطة الرياضية',
-  'نادي شباب المستقبل',
-  NULL,
-  NULL,
-  NOW() - INTERVAL '2 days'
-)
-ON CONFLICT (tracking_code) DO NOTHING;
-
--- أحداث السجل الزمني التجريبية (سجل "new" يُضاف تلقائياً بواسطة التريجر).
-INSERT INTO public.complaint_timeline (complaint_id, status, note, actor_name, created_at)
-SELECT c.id, 'under_review',
-       'تم فحص أوراق الطلب وتحويله للأمانة المختصة للدراسة.',
-       'م. محمود الجزار (مسؤول الأمانة)',
-       c.created_at + INTERVAL '30 minutes'
-FROM public.complaints c
-WHERE c.tracking_code IN ('SH-1030-01', 'SH-1030-02', 'SH-1029-01')
-  AND NOT EXISTS (
-    SELECT 1 FROM public.complaint_timeline t
-    WHERE t.complaint_id = c.id AND t.status = 'under_review'
-  );
-
-INSERT INTO public.complaint_timeline (complaint_id, status, note, actor_name, created_at)
-SELECT c.id, 'in_progress',
-       'جاري التنسيق الميداني والبدء في تنفيذ الحل.',
-       'أ. محمد العزب (عضو الأمانة)',
-       c.created_at + INTERVAL '1 hour'
-FROM public.complaints c
-WHERE c.tracking_code IN ('SH-1030-02', 'SH-1029-01')
-  AND NOT EXISTS (
-    SELECT 1 FROM public.complaint_timeline t
-    WHERE t.complaint_id = c.id AND t.status = 'in_progress'
-  );
-
-INSERT INTO public.complaint_timeline (complaint_id, status, note, actor_name, created_at)
-SELECT c.id, 'resolved',
-       'تم إنجاز الطلب بالكامل والتأكد من إزالة أسباب الشكوى.',
-       'أ. سامر التلاوي (رئيس الأمانة)',
-       c.created_at + INTERVAL '3 hours'
-FROM public.complaints c
-WHERE c.tracking_code = 'SH-1029-01'
-  AND NOT EXISTS (
-    SELECT 1 FROM public.complaint_timeline t
-    WHERE t.complaint_id = c.id AND t.status = 'resolved'
-  );
 
 -- إعادة تحميل مخطط PostgREST حتى تظهر الجداول والدوال الجديدة فوراً في الـ API.
 NOTIFY pgrst, 'reload schema';
 
 -- ==============================================================================
--- انتهى. بعد التسجيل الأول للمشرف العام:
---   * سجّل على /login بالبريد admin@mostaqbal-watan.org ثم أكّد رسالة البريد.
---   * تحقق من الدور:  SELECT id, email, role FROM public.profiles;
---   * إن كان تأكيد البريد معطّلاً، فعّله ثم نفّذ الترقية اليدوية:
---       UPDATE public.profiles SET role = 'admin'
---       WHERE lower(email) = lower('admin@mostaqbal-watan.org');
+-- انتهى.
+-- دخول المنظومة الآن بكلمة سر واحدة عبر متغيرات البيئة الخادمية:
+--   ADMIN_LOGIN_PASSWORD / ADMIN_SESSION_SECRET
+-- لا يحتاج النظام إلى Supabase Auth، ولا تُستخدم profiles للأدوار.
 -- ==============================================================================
 
 -- ============================================================================
@@ -998,7 +912,7 @@ update public.profiles set role = 'admin' where role is distinct from 'admin';
 -- 4. إسقاط staff_invites (لم تعد مستخدمة)
 drop table if exists public.staff_invites cascade;
 
--- 5. إعادة كتابة handle_new_user: كل مستخدم جديد = admin عادي
+-- 5. إعادة كتابة handle_new_user: لا يُنشئ profile إلا لحساب مُنشأ إدارياً
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -1006,6 +920,11 @@ security definer
 set search_path = public
 as $$
 begin
+  -- raw_app_meta_data لا يمكن للعميل تعديله؛ غياب الوسم = تسجيل ذاتي مرفوض.
+  if coalesce(new.raw_app_meta_data->>'provisioned_by', '') <> 'admin' then
+    return new;
+  end if;
+
   insert into public.profiles
     (id, email, full_name, username, role, is_super_admin)
   values (
@@ -1087,7 +1006,7 @@ create or replace function public.create_admin_user(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, extensions
+set search_path = extensions, public
 as $$
 declare
   v_caller uuid := auth.uid();
@@ -1104,8 +1023,8 @@ begin
   if p_email is null or length(trim(p_email)) = 0 then
     raise exception 'Email required';
   end if;
-  if p_password is null or length(p_password) < 8 then
-    raise exception 'Password must be at least 8 characters';
+  if p_password is null or length(p_password) < 12 then
+    raise exception 'Password must be at least 12 characters';
   end if;
 
   -- check existing
@@ -1116,7 +1035,8 @@ begin
   v_new_id := gen_random_uuid();
   insert into auth.users (
     id, instance_id, email, encrypted_password, email_confirmed_at,
-    role, aud, created_at, updated_at, raw_user_meta_data
+    role, aud, created_at, updated_at,
+    raw_user_meta_data, raw_app_meta_data
   ) values (
     v_new_id,
     '00000000-0000-0000-0000-000000000000',
@@ -1124,7 +1044,8 @@ begin
     extensions.crypt(p_password, extensions.gen_salt('bf')),
     now(),
     'authenticated', 'authenticated', now(), now(),
-    jsonb_build_object('full_name', coalesce(p_full_name, split_part(trim(p_email),'@',1)), 'username', p_username)
+    jsonb_build_object('full_name', coalesce(p_full_name, split_part(trim(p_email),'@',1)), 'username', p_username),
+    jsonb_build_object('provisioned_by', 'admin')
   );
 
   -- profile is created by trigger; update name/username
@@ -1196,9 +1117,28 @@ grant execute on function public.update_own_profile(text,text,text) to authentic
 -- 11. RLS profiles
 alter table public.profiles enable row level security;
 
+-- دالة مساعدة SECURITY DEFINER لتفادي recursion داخل سياسات profiles
+create or replace function public.is_super_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    (select p.is_super_admin from public.profiles p where p.id = auth.uid()),
+    false
+  );
+$$;
+
+revoke all on function public.is_super_admin() from public, anon;
+grant execute on function public.is_super_admin() to authenticated;
+
 drop policy if exists profiles_select_all on public.profiles;
-create policy profiles_select_all on public.profiles
-  for select to authenticated using (true);
+drop policy if exists profiles_select_own on public.profiles;
+create policy profiles_select_own on public.profiles
+  for select to authenticated
+  using (id = auth.uid() or public.is_super_admin());
 
 drop policy if exists profiles_update_own on public.profiles;
 create policy profiles_update_own on public.profiles

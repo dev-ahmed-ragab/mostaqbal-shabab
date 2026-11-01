@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Complaint, STATUS_META } from '@/types/database';
+import { escapeHtml } from '@/lib/escapeHtml';
 
 export interface BulkPdfOptions {
   title?: string;
@@ -35,12 +36,12 @@ function buildBulkHtml(
     <div style="border-bottom: 3px solid #133063; padding-bottom: 14px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; direction: rtl;">
       <div style="text-align: right;">
         <span style="font-size: 13px; font-weight: bold; color: #00a3e0; display: block;">جمهورية مصر العربية • حزب مستقبل وطن</span>
-        <h1 style="font-size: 20px; font-weight: 800; color: #133063; margin: 4px 0;">${title}</h1>
+        <h1 style="font-size: 20px; font-weight: 800; color: #133063; margin: 4px 0;">${escapeHtml(title)}</h1>
         <p style="font-size: 11px; color: #64748b; margin: 0;">منظومة خدمة المواطنين المركزية • حزب مستقبل وطن - أمانة مركز بركة السبع</p>
       </div>
       <div style="text-align: left;">
         <span style="font-size: 10px; color: #64748b; display: block;">تاريخ استخراج التقرير:</span>
-        <span style="font-size: 12px; font-weight: bold; color: #133063;">${todayStr}</span>
+        <span style="font-size: 12px; font-weight: bold; color: #133063;">${escapeHtml(todayStr)}</span>
         <span style="display: block; font-size: 10px; color: #00a3e0; font-weight: bold; margin-top: 2px;">مستند رسمي معتمد</span>
       </div>
     </div>
@@ -90,12 +91,12 @@ function buildBulkHtml(
             return `
             <tr style="background-color: ${rowBg};">
               <td style="padding: 6px 4px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;">${index + 1}</td>
-              <td style="padding: 6px 4px; border: 1px solid #cbd5e1; font-family: monospace; font-weight: bold; color: #133063;">${c.tracking_code}</td>
-              <td style="padding: 6px 4px; border: 1px solid #cbd5e1; font-weight: bold;">${c.citizen_name}</td>
-              <td style="padding: 6px 4px; border: 1px solid #cbd5e1; font-family: monospace;" dir="ltr">${c.primary_phone}</td>
-              <td style="padding: 6px 4px; border: 1px solid #cbd5e1; font-size: 9px; color: #00a3e0; font-weight: bold;">${committeeLabel}</td>
-              <td style="padding: 6px 4px; border: 1px solid #cbd5e1;">${c.title}</td>
-              <td style="padding: 6px 4px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;">${statusLabel}</td>
+              <td style="padding: 6px 4px; border: 1px solid #cbd5e1; font-family: monospace; font-weight: bold; color: #133063;">${escapeHtml(c.tracking_code)}</td>
+              <td style="padding: 6px 4px; border: 1px solid #cbd5e1; font-weight: bold;">${escapeHtml(c.citizen_name)}</td>
+              <td style="padding: 6px 4px; border: 1px solid #cbd5e1; font-family: monospace;" dir="ltr">${escapeHtml(c.primary_phone)}</td>
+              <td style="padding: 6px 4px; border: 1px solid #cbd5e1; font-size: 9px; color: #00a3e0; font-weight: bold;">${escapeHtml(committeeLabel)}</td>
+              <td style="padding: 6px 4px; border: 1px solid #cbd5e1;">${escapeHtml(c.title)}</td>
+              <td style="padding: 6px 4px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;">${escapeHtml(statusLabel)}</td>
               <td style="padding: 6px 4px; border: 1px solid #cbd5e1; text-align: center; font-size: 9px; font-family: monospace;">
                 ${new Date(c.created_at).toLocaleDateString('ar-EG', { month: 'numeric', day: 'numeric' })}
               </td>
@@ -157,7 +158,7 @@ export function printBulkComplaintsWindow(
     <html lang="ar" dir="rtl">
     <head>
       <meta charset="utf-8">
-      <title>${title}</title>
+      <title>${escapeHtml(title)}</title>
       <style>
         @page {
           size: A4 landscape;
@@ -241,7 +242,7 @@ export async function generateBulkComplaintsPdf(
     return;
   }
 
-  const { title, html } = buildBulkHtml(complaints, titleOrOptions);
+  const { html } = buildBulkHtml(complaints, titleOrOptions);
 
   // إنشاء حاوية خارج الشاشة أفقياً بدون zIndex سالب لضمان رسم المتصفح
   const container = document.createElement('div');

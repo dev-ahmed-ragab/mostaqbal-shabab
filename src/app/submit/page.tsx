@@ -25,7 +25,7 @@ import { ComplaintReceipt } from '@/components/ComplaintReceipt';
 
 export default function SubmitComplaintPage() {
   const [isConfidential, setIsConfidential] = useState(false);
-  const [privacyAgreed, setPrivacyAgreed] = useState(true);
+  const [privacyAgreed, setPrivacyAgreed] = useState(false);
 
   // بيانات المواطن الأساسية
   const [fullName, setFullName] = useState('');
@@ -97,34 +97,53 @@ export default function SubmitComplaintPage() {
 
     setUploadingFiles(true);
     const newAttachments: Attachment[] = [];
+    const allowedImages = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/heic',
+      'image/heif',
+    ];
+    const allowedVideos = ['video/mp4', 'video/quicktime', 'video/webm'];
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const isVideo = file.type.startsWith('video/');
-      const isImage = file.type.startsWith('image/');
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const isVideo = allowedVideos.includes(file.type);
+        const isImage = allowedImages.includes(file.type);
 
-      if (isVideo) {
-        if (file.size > 25 * 1024 * 1024) {
-          alert(`حجم الفيديو "${file.name}" أكبر من 25 ميجابايت.`);
+        if (isVideo) {
+          if (file.size > 25 * 1024 * 1024) {
+            alert(`حجم الفيديو "${file.name}" أكبر من 25 ميجابايت.`);
+            continue;
+          }
+        } else if (isImage) {
+          if (file.size > 5 * 1024 * 1024) {
+            alert(`حجم الصورة "${file.name}" أكبر من 5 ميجابايت.`);
+            continue;
+          }
+        } else {
+          alert(`الملف "${file.name}" غير مدعوم.`);
           continue;
         }
-      } else if (isImage) {
-        if (file.size > 5 * 1024 * 1024) {
-          alert(`حجم الصورة "${file.name}" أكبر من 5 ميجابايت.`);
-          continue;
+
+        try {
+          const att = await uploadAttachment(file);
+          newAttachments.push(att);
+        } catch (err) {
+          alert(
+            err instanceof Error
+              ? err.message
+              : `تعذّر رفع الملف "${file.name}".`
+          );
         }
-      } else {
-        alert(`الملف "${file.name}" غير مدعوم.`);
-        continue;
       }
 
-      const att = await uploadAttachment(file);
-      newAttachments.push(att);
+      setAttachments((prev) => [...prev, ...newAttachments]);
+    } finally {
+      setUploadingFiles(false);
+      e.target.value = '';
     }
-
-    setAttachments((prev) => [...prev, ...newAttachments]);
-    setUploadingFiles(false);
-    e.target.value = '';
   };
 
   const handleRemoveAttachment = (index: number) => {
@@ -136,8 +155,18 @@ export default function SubmitComplaintPage() {
     e.preventDefault();
     setErrorMessage(null);
 
+    if (!privacyAgreed) {
+      setErrorMessage('يجب الموافقة على سياسة الخصوصية قبل إرسال الطلب.');
+      return;
+    }
+
     if (!fullName.trim() || fullName.trim().length < 3) {
       setErrorMessage('يرجى إدخال اسمك الكريم بشكل صحيح.');
+      return;
+    }
+
+    if (fullName.trim().length > 150) {
+      setErrorMessage('الاسم أطول من الحد المسموح (150 حرفاً).');
       return;
     }
 
@@ -158,6 +187,11 @@ export default function SubmitComplaintPage() {
       return;
     }
 
+    if (description.trim().length > 10000) {
+      setErrorMessage('تفاصيل الطلب أطول من الحد المسموح (10000 حرف).');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -175,6 +209,9 @@ export default function SubmitComplaintPage() {
         finalTitle = `[${category}] ${finalTitle}`;
       }
 
+      // الحد المطابق للتحقق الخادمي في submit_complaint.
+      finalTitle = finalTitle.slice(0, 300);
+
       const fullDesc = description.trim();
 
       const altList: AltContact[] = [];
@@ -184,7 +221,7 @@ export default function SubmitComplaintPage() {
 
       const activeComm = YOUTH_SECRETARIAT;
 
-      // الربط بالحساب يتم على الخادم من جلسة Supabase داخل submit_complaint،
+      // الربط بالحساب يتم على الخادم داخل submit_complaint،
       // لذلك لا نرسل citizen_id من العميل.
       const created = await complaintsService.create({
         citizen_name: fullName.trim(),

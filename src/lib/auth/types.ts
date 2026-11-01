@@ -1,12 +1,10 @@
 // Shared, dependency-free authentication types and helpers.
-// نظام إداري فقط (admin-only): كل مستخدم مصادق = أدمن.
+// نموذج الدخول: هوية واحدة فقط (المهندس / محمد العزب) بكلمة سر واحدة.
+// لا توجد أدوار متعددة ولا حسابات مواطنين/موظفين.
 
 export type UserRole = 'admin';
 
 export type AdminRole = UserRole;
-
-/** كل المستخدمين أدمن؛ لذا كلهم "staff". */
-export type StaffRole = 'admin';
 
 export interface RoleMeta {
   role: UserRole;
@@ -21,7 +19,7 @@ export interface RoleMeta {
 export const ROLES_META: Record<UserRole, RoleMeta> = {
   admin: {
     role: 'admin',
-    label: 'أدمن',
+    label: 'المشرف العام',
     rank: 100,
     badgeBg: 'bg-[#133063]',
     badgeText: 'text-white',
@@ -70,32 +68,18 @@ export interface AdminUser {
 
 export type AuthUser = AdminUser;
 
-/** شكل صف جدول profiles في Supabase. */
-export interface ProfileRow {
-  id: string;
-  email: string | null;
-  full_name: string | null;
-  username: string | null;
-  avatar_url: string | null;
-  is_super_admin: boolean | null;
-  created_at?: string | null;
+export function isAdminRole(role: UserRole | null | undefined): boolean {
+  return role === 'admin';
 }
 
-const VALID_ROLES: UserRole[] = ['admin'];
-
-export function normalizeRole(_value: unknown): UserRole {
-  return 'admin';
+/** السوبر أدمن لم يعد مفهوماً منفصلاً؛ الهوية الوحيدة هي المشرف العام. */
+export function isSuperAdminUser(
+  user: Pick<AdminUser, 'role' | 'isSuperAdmin'> | null | undefined
+): boolean {
+  return !!user && isAdminRole(user.role);
 }
 
-export function isAdminRole(_role: UserRole | null | undefined): boolean {
-  return true;
-}
-
-export function isStaffRole(_role: UserRole | null | undefined): boolean {
-  return true;
-}
-
-export function homePathForRole(_role: UserRole | null | undefined): string {
+export function homePathForRole(): string {
   return '/admin';
 }
 
@@ -119,26 +103,4 @@ export function sanitizeNextPath(
   } catch {
     return fallback;
   }
-}
-
-export function profileToAdminUser(
-  row: Partial<ProfileRow> & { id: string },
-  fallbackName?: string
-): AdminUser {
-  const email = row.email || '';
-  return {
-    id: row.id,
-    email,
-    name:
-      row.full_name?.trim() ||
-      fallbackName?.trim() ||
-      (row.username?.trim() || '') ||
-      email.split('@')[0] ||
-      'مستخدم',
-    username: row.username || undefined,
-    avatar: row.avatar_url || undefined,
-    isSuperAdmin: !!row.is_super_admin,
-    role: 'admin',
-    loggedInAt: new Date().toISOString(),
-  };
 }

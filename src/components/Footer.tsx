@@ -33,16 +33,16 @@ function FooterInner() {
                   unoptimized
                 />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-xs font-bold text-[#00a3e0] block">حزب مستقبل وطن</span>
-                  <span className="px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 text-[10px] font-bold border border-amber-400/30">
+                  <span className="hidden min-[360px]:inline-block px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 text-[10px] font-bold border border-amber-400/30">
                     أمانة مركز بركة السبع
                   </span>
                 </div>
-                <h3 className="text-base font-extrabold text-white">أمانة الشباب</h3>
+                <h3 className="text-sm sm:text-base font-extrabold text-white">أمانة الشباب</h3>
                 <p className="text-[11px] text-slate-400 font-semibold">محافظة المنوفية</p>
-                <p className="text-xs text-amber-300 font-bold mt-1">
+                <p className="text-xs text-slate-300 font-semibold mt-1">
                   أمين الشباب بالمركز: المهندس / محمد العزب
                 </p>
               </div>
@@ -82,8 +82,13 @@ function FooterInner() {
                 </Link>
               </li>
               <li>
-                <Link href="/committee" className="hover:text-[#00a3e0] transition flex items-center gap-1.5 text-amber-300 font-semibold">
+                <Link href="/committee" className="hover:text-[#00a3e0] transition flex items-center gap-1.5">
                   • قيادات وأعضاء هيئة المكتب
+                </Link>
+              </li>
+              <li>
+                <Link href="/qr" className="hover:text-[#00a3e0] transition flex items-center gap-1.5">
+                  • QR كود
                 </Link>
               </li>
               <li>

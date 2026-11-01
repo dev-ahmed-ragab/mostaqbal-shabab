@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { requireUser } from '@/lib/supabase/server';
+import { requireAdmin } from '@/lib/supabase/server';
 
 export default function AdminUsersLayout({
   children,
@@ -14,6 +14,6 @@ export default function AdminUsersLayout({
 }
 
 async function AdminGuard({ children }: { children: React.ReactNode }) {
-  await requireUser('/admin/users');
+  await requireAdmin('/admin/users');
   return <>{children}</>;
 }

@@ -2,7 +2,6 @@ import { Complaint, ComplaintTimeline, ComplaintStatus, STATUS_META } from '@/ty
 import { supabase, isSupabaseConfigured } from './supabase/client';
 import { generateTrackingCode } from './generateCode';
 
-// بيانات تجريبية أولية واقعية وشاملة لمركز بركة السبع وقراها متدرجة زمنياً
 const INITIAL_DEMO_COMPLAINTS: Complaint[] = [
   {
     id: 'c101-azab-uuid',
@@ -329,11 +328,25 @@ const INITIAL_DEMO_TIMELINE: ComplaintTimeline[] = [
   },
 ];
 
-const LOCAL_STORAGE_KEY = 'mostaqbal_shabab_complaints_v4';
-const LOCAL_STORAGE_TIMELINE_KEY = 'mostaqbal_shabab_timeline_v4';
+const LOCAL_STORAGE_KEY = 'mostaqbal_shabab_complaints_v5';
+const LOCAL_STORAGE_TIMELINE_KEY = 'mostaqbal_shabab_timeline_v5';
+const LEGACY_LOCAL_STORAGE_KEYS = [
+  'mostaqbal_shabab_complaints_v4',
+  'mostaqbal_shabab_timeline_v4',
+];
+
+function clearLegacyLocalData(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    LEGACY_LOCAL_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+  } catch {
+    // ignore
+  }
+}
 
 function getLocalComplaints(): Complaint[] {
   if (typeof window === 'undefined') return INITIAL_DEMO_COMPLAINTS;
+  clearLegacyLocalData();
   const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
   if (!stored) {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(INITIAL_DEMO_COMPLAINTS));
@@ -341,7 +354,7 @@ function getLocalComplaints(): Complaint[] {
   }
   try {
     const parsed = JSON.parse(stored);
-    if (!Array.isArray(parsed) || !parsed[0]?.citizen_name?.includes('محمد العزب')) {
+    if (!Array.isArray(parsed) || parsed.length === 0) {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(INITIAL_DEMO_COMPLAINTS));
       return INITIAL_DEMO_COMPLAINTS;
     }
@@ -359,13 +372,19 @@ function saveLocalComplaints(complaints: Complaint[]): void {
 
 function getLocalTimeline(): ComplaintTimeline[] {
   if (typeof window === 'undefined') return INITIAL_DEMO_TIMELINE;
+  clearLegacyLocalData();
   const stored = localStorage.getItem(LOCAL_STORAGE_TIMELINE_KEY);
   if (!stored) {
     localStorage.setItem(LOCAL_STORAGE_TIMELINE_KEY, JSON.stringify(INITIAL_DEMO_TIMELINE));
     return INITIAL_DEMO_TIMELINE;
   }
   try {
-    return JSON.parse(stored);
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      localStorage.setItem(LOCAL_STORAGE_TIMELINE_KEY, JSON.stringify(INITIAL_DEMO_TIMELINE));
+      return INITIAL_DEMO_TIMELINE;
+    }
+    return parsed;
   } catch {
     return INITIAL_DEMO_TIMELINE;
   }
@@ -384,7 +403,7 @@ function saveLocalTimeline(timeline: ComplaintTimeline[]): void {
 export const complaintsService = {
   /**
    * جلب الشكاوى المسموح بها للمستخدم الحالي.
-   * في حال عدم توفر بيانات عن بُعد، يتم تقديم البيانات النموذجية الشاملة لمركز بركة السبع.
+   * لا توجد بيانات تجريبية؛ عند تعذّر الجلب نعيد ما حُفظ محلياً على هذا الجهاز فقط.
    */
   async getAll(): Promise<Complaint[]> {
     if (isSupabaseConfigured && supabase) {

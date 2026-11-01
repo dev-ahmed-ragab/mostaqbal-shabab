@@ -1,4 +1,4 @@
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -18,8 +18,8 @@ let browserClient: SupabaseClient | null = null;
 
 /**
  * عميل Supabase للمتصفح.
- * نستخدم createBrowserClient من @supabase/ssr حتى تُحفظ الجلسة في كوكيز
- * يمكن للخادم (proxy / server components) قراءتها والتحقق منها.
+ * Supabase هنا للبيانات/التخزين فقط، وليس للهوية أو الأدوار.
+ * لذلك نعطّل حفظ الجلسة وتجديدها: الدخول يتم بكلمة سر واحدة على الخادم.
  */
 export function getSupabaseBrowserClient(): SupabaseClient {
   if (!isSupabaseConfigured) {
@@ -27,7 +27,13 @@ export function getSupabaseBrowserClient(): SupabaseClient {
   }
 
   if (!browserClient) {
-    browserClient = createBrowserClient(supabaseUrl, supabaseAnonKey);
+    browserClient = createSupabaseClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    });
   }
 
   return browserClient;

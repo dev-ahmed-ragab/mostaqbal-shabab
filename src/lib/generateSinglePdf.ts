@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Complaint, STATUS_META } from '@/types/database';
 import { LOGO_BASE64 } from '@/lib/logoBase64';
+import { escapeHtml } from '@/lib/escapeHtml';
 
 /**
  * توليد وتنزيل استمارة وقرار الشكوى الفردية بصيغة PDF مباشرة بدون الحاجة لفتح نافذة الطباعة
@@ -38,7 +39,7 @@ export async function generateSingleComplaintPdf(complaint: Complaint): Promise<
           <div style="display: inline-block; padding: 3px 10px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; font-size: 10px; font-weight: bold; color: #133063;">
             إشعار رسمي معتمد
           </div>
-          <p style="font-size: 9px; color: #64748b; margin: 4px 0 0 0;">تاريخ الإصدار: ${todayStr}</p>
+          <p style="font-size: 9px; color: #64748b; margin: 4px 0 0 0;">تاريخ الإصدار: ${escapeHtml(todayStr)}</p>
         </div>
       </div>
 
@@ -46,11 +47,11 @@ export async function generateSingleComplaintPdf(complaint: Complaint): Promise<
       <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;">
         <div>
           <span style="font-size: 9px; color: #64748b; display: block; font-weight: bold;">كود الشكوى الرسمي:</span>
-          <strong style="font-size: 16px; color: #133063; font-family: monospace; letter-spacing: 1px;">${complaint.tracking_code}</strong>
+          <strong style="font-size: 16px; color: #133063; font-family: monospace; letter-spacing: 1px;">${escapeHtml(complaint.tracking_code)}</strong>
         </div>
         <div style="text-align: left;">
           <span style="font-size: 9px; color: #64748b; display: block; font-weight: bold;">حالة الطلب:</span>
-          <strong style="font-size: 12px; color: #00a3e0;">${statusLabel}</strong>
+          <strong style="font-size: 12px; color: #00a3e0;">${escapeHtml(statusLabel)}</strong>
         </div>
       </div>
 
@@ -62,15 +63,15 @@ export async function generateSingleComplaintPdf(complaint: Complaint): Promise<
         <table style="width: 100%; font-size: 10px; border-collapse: collapse; text-align: right;">
           <tr>
             <td style="padding: 3px 0; color: #64748b; width: 22%;">اسم المواطن:</td>
-            <td style="padding: 3px 0; font-weight: bold; color: #0f172a; width: 28%;">${complaint.citizen_name}</td>
+            <td style="padding: 3px 0; font-weight: bold; color: #0f172a; width: 28%;">${escapeHtml(complaint.citizen_name)}</td>
             <td style="padding: 3px 0; color: #64748b; width: 22%;">الرقم القومي:</td>
-            <td style="padding: 3px 0; font-family: monospace; font-weight: bold; color: #0f172a; width: 28%;">${complaint.national_id}</td>
+            <td style="padding: 3px 0; font-family: monospace; font-weight: bold; color: #0f172a; width: 28%;">${escapeHtml(complaint.national_id)}</td>
           </tr>
           <tr>
             <td style="padding: 3px 0; color: #64748b;">رقم الهاتف:</td>
-            <td style="padding: 3px 0; font-family: monospace; font-weight: bold; color: #0f172a;" dir="ltr">${complaint.primary_phone}</td>
+            <td style="padding: 3px 0; font-family: monospace; font-weight: bold; color: #0f172a;" dir="ltr">${escapeHtml(complaint.primary_phone)}</td>
             <td style="padding: 3px 0; color: #64748b;">العنوان / المركز:</td>
-            <td style="padding: 3px 0; font-weight: bold; color: #0f172a;">${complaint.location_address || 'مركز بركة السبع - محافظة المنوفية'}</td>
+            <td style="padding: 3px 0; font-weight: bold; color: #0f172a;">${escapeHtml(complaint.location_address || 'مركز بركة السبع - محافظة المنوفية')}</td>
           </tr>
         </table>
       </div>
@@ -81,14 +82,14 @@ export async function generateSingleComplaintPdf(complaint: Complaint): Promise<
           موضوع الشكوى / المقترح:
         </h3>
         <p style="font-size: 11px; font-weight: bold; color: #133063; margin: 0 0 6px 0; background: #eff6ff; padding: 6px 10px; border-radius: 6px;">
-          ${complaint.title}
+          ${escapeHtml(complaint.title)}
         </p>
 
         <h4 style="font-size: 10px; font-weight: bold; color: #475569; margin: 8px 0 3px 0;">
           التفاصيل والشرح:
         </h4>
         <p style="font-size: 10px; color: #334155; line-height: 1.5; margin: 0; background: #ffffff; padding: 6px; border: 1px solid #f1f5f9; border-radius: 6px;">
-          ${complaint.description}
+          ${escapeHtml(complaint.description)}
         </p>
       </div>
 
@@ -98,7 +99,7 @@ export async function generateSingleComplaintPdf(complaint: Complaint): Promise<
           التأشيرة والقرار التنفيذي لأمانة الشباب:
         </h3>
         <p style="font-size: 10px; color: #0f172a; font-weight: 600; line-height: 1.5; margin: 0;">
-          ${complaint.admin_notes || 'جاري الفحص والمتابعة الميدانية مع الأجهزة التنفيذية ومراكز الشباب بالمحافظة.'}
+          ${escapeHtml(complaint.admin_notes || 'جاري الفحص والمتابعة الميدانية مع الأجهزة التنفيذية ومراكز الشباب بالمحافظة.')}
         </p>
       </div>
 
