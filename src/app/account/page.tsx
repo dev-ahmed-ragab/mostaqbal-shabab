@@ -84,7 +84,7 @@ async function AccountContent() {
             </div>
 
             <p className="text-xs text-amber-950/90 font-medium leading-relaxed">
-              نظراً لاعتماد المنظومة على الدخول الإداري المركزي الموحد باسم <strong>الأستاذ / محمد هلال (أمين مركز بركة السبع)</strong>،
+              نظراً لاعتماد المنظومة على الدخول الإداري المركزي الموحد باسم <strong>المهندس / محمد العزب (أمين الشباب بمركز بركة السبع)</strong>،
               فقد تم إيقاف تعديل الاسم وكلمة المرور والبيانات الشخصية مؤقتاً لضمان استقرار جلسة العمل خلال مرحلة العرض والتشغيل الميداني.
             </p>
 
@@ -99,22 +99,27 @@ async function AccountContent() {
       <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 shadow-xs space-y-5">
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#133063] text-white flex items-center justify-center font-black text-base shadow-xs">
-              م
+            <div className="w-13 h-13 rounded-2xl overflow-hidden border-2 border-[#133063]/30 shrink-0 shadow-xs">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/leaders/avatar-azab.jpg"
+                alt="المهندس / محمد العزب"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <h2 className="text-base font-black text-[#133063]">
-                الأستاذ / محمد هلال
+                المهندس / محمد العزب
               </h2>
               <p className="text-xs text-slate-500 font-bold mt-0.5">
-                أمين مركز بركة السبع - المشرف العام المعتمد
+                أمين الشباب بمركز بركة السبع - المشرف العام المعتمد
               </p>
             </div>
           </div>
 
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-black">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            سوبر أدمن (مفعل)
+            مشرف عام (مفعل)
           </span>
         </div>
 

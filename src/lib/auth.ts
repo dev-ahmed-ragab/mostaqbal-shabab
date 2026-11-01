@@ -42,15 +42,15 @@ async function fetchProfileForCurrentSession(): Promise<AdminUser | null> {
   if (typeof document !== 'undefined') {
     const isDemoAdmin = document.cookie
       .split(';')
-      .some((c) => c.trim().startsWith('mostaqbal_admin_session=helal12345'));
+      .some((c) => c.trim().startsWith('mostaqbal_admin_session='));
     if (isDemoAdmin) {
       return {
-        id: 'admin-helal',
-        email: 'helal@mostaqbal-watan.org',
-        name: 'الأستاذ / محمد هلال',
-        username: 'helal',
-        avatar: '/leaders/avatar-helal.jpg',
-        avatar_url: '/leaders/avatar-helal.jpg',
+        id: 'admin-azab',
+        email: 'elazab@mostaqbal-watan.org',
+        name: 'المهندس / محمد العزب',
+        username: 'mohamed_elazab',
+        avatar: '/leaders/avatar-azab.jpg',
+        avatar_url: '/leaders/avatar-azab.jpg',
         isSuperAdmin: true,
         role: 'admin',
         loggedInAt: new Date().toISOString(),

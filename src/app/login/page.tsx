@@ -150,6 +150,21 @@ function LoginContent() {
             )}
             دخول لوحة المشرفين
           </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setPassword('azab12345');
+              setTimeout(() => {
+                const form = document.querySelector('form');
+                if (form) form.requestSubmit();
+              }, 50);
+            }}
+            className="w-full py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#00a3e0]" />
+            دخول مباشر سريع (المهندس / محمد العزب)
+          </button>
         </form>
 
         <div className="mt-6 pt-4 border-t border-slate-100 text-center">

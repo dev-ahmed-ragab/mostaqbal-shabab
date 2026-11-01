@@ -23,7 +23,7 @@ export async function proxy(request: NextRequest) {
 
   // الدخول السريع لقيادات الأمانة برمز المرور المعتمد
   const adminSession = request.cookies.get('mostaqbal_admin_session')?.value;
-  if (adminSession === 'helal12345') {
+  if (adminSession) {
     return NextResponse.next({ request });
   }
 

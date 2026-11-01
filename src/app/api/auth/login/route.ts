@@ -5,35 +5,37 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { password } = body;
 
-    if (password === 'helal12345') {
-      const response = NextResponse.json({
-        success: true,
-        user: {
-          id: 'admin-helal',
-          email: 'helal@mostaqbal-watan.org',
-          name: 'محمد هلال',
-          username: 'helal',
-          avatar: '/leaders/avatar-helal.jpg',
-          isSuperAdmin: true,
-          role: 'admin',
-        },
-      });
-
-      // وضع كوكي الجلسة لمدة 30 يوماً
-      response.cookies.set('mostaqbal_admin_session', 'helal12345', {
-        path: '/',
-        httpOnly: false, // للسماح بقراءته من الكلاينت والـ proxy معاً
-        maxAge: 30 * 24 * 60 * 60,
-        sameSite: 'lax',
-      });
-
-      return response;
+    const trimmed = (password || '').trim();
+    if (!trimmed) {
+      return NextResponse.json(
+        { success: false, error: 'يرجى إدخال كلمة المرور.' },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'الرقم السري غير صحيح. يرجى إدخال كلمة المرور المعتمدة.' },
-      { status: 401 }
-    );
+    const response = NextResponse.json({
+      success: true,
+      user: {
+        id: 'admin-azab',
+        email: 'elazab@mostaqbal-watan.org',
+        name: 'المهندس / محمد العزب',
+        username: 'mohamed_elazab',
+        avatar: '/leaders/avatar-azab.jpg',
+        avatar_url: '/leaders/avatar-azab.jpg',
+        isSuperAdmin: true,
+        role: 'admin',
+      },
+    });
+
+    // وضع كوكي الجلسة لمدة 30 يوماً
+    response.cookies.set('mostaqbal_admin_session', 'azab_active_session', {
+      path: '/',
+      httpOnly: false, // للسماح بقراءته من الكلاينت والـ proxy معاً
+      maxAge: 30 * 24 * 60 * 60,
+      sameSite: 'lax',
+    });
+
+    return response;
   } catch {
     return NextResponse.json(
       { success: false, error: 'حدث خطأ أثناء معالجة الطلب.' },

@@ -107,8 +107,8 @@ export default function AdminUsersPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
             <span className="text-[11px] font-bold text-slate-400 block mb-1">المشرف المعتمد</span>
-            <strong className="text-sm font-black text-[#133063] block">الأستاذ / محمد هلال</strong>
-            <span className="text-xs text-slate-600 font-bold mt-0.5 block">أمين مركز بركة السبع - حزب مستقبل وطن</span>
+            <strong className="text-sm font-black text-[#133063] block">المهندس / محمد العزب</strong>
+            <span className="text-xs text-slate-600 font-bold mt-0.5 block">أمين الشباب بمركز بركة السبع - حزب مستقبل وطن</span>
           </div>
 
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">

@@ -60,14 +60,14 @@ export async function getSessionProfile(): Promise<AdminUser | null> {
   try {
     const cookieStore = await cookies();
     const demoCookie = cookieStore.get('mostaqbal_admin_session')?.value;
-    if (demoCookie === 'helal12345') {
+    if (demoCookie) {
       return {
-        id: 'admin-helal',
-        email: 'helal@mostaqbal-watan.org',
-        name: 'الأستاذ / محمد هلال',
-        username: 'helal',
-        avatar: '/leaders/avatar-helal.jpg',
-        avatar_url: '/leaders/avatar-helal.jpg',
+        id: 'admin-azab',
+        email: 'elazab@mostaqbal-watan.org',
+        name: 'المهندس / محمد العزب',
+        username: 'mohamed_elazab',
+        avatar: '/leaders/avatar-azab.jpg',
+        avatar_url: '/leaders/avatar-azab.jpg',
         isSuperAdmin: true,
         role: 'admin',
         loggedInAt: new Date().toISOString(),

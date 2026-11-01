@@ -113,9 +113,20 @@ export default function AdminLayoutClient({
         </div>
 
         <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-xs">
-          <div className="w-9 h-9 rounded-xl bg-[#133063] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-            {user.name ? user.name.slice(0, 1) : 'م'}
-          </div>
+          {user.avatar || user.avatar_url ? (
+            <div className="w-9 h-9 rounded-xl overflow-hidden border border-[#133063]/20 shrink-0 shadow-2xs">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={user.avatar || user.avatar_url}
+                alt={user.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-9 h-9 rounded-xl bg-[#133063] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+              {user.name ? user.name.slice(0, 1) : 'م'}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <p className="font-black text-[#133063] truncate">{user.name}</p>
             <p className="text-[10px] text-slate-400 truncate" dir="ltr">{user.email}</p>
