@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import React, { useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -32,6 +32,9 @@ function TrackContent() {
   const initialCode = searchParams.get('code') || '';
 
   const [searchInput, setSearchInput] = useState(initialCode);
+  const [phoneInput, setPhoneInput] = useState('');
+  const [verifiedPhone, setVerifiedPhone] = useState('');
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [results, setResults] = useState<Complaint[]>([]);
@@ -39,70 +42,62 @@ function TrackContent() {
   const [timeline, setTimeline] = useState<ComplaintTimeline[]>([]);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
 
-  // اختيار الشكوى وجلب مسارها
-  const handleSelectComplaint = useCallback(async (complaint: Complaint) => {
+  // اختيار الشكوى وجلب مسارها (مع تمرير الهاتف للتحقق من الملكية)
+  const handleSelectComplaint = useCallback(async (complaint: Complaint, phone: string) => {
     setSelectedComplaint(complaint);
     try {
-      const hist = await complaintsService.getTimeline(complaint.id);
+      const hist = await complaintsService.getTimeline(complaint.id, phone);
       setTimeline(hist);
     } catch {
       setTimeline([]);
     }
   }, []);
 
-  // فحص ذكي لنوع المدخل (كود شكوى أو رقم هاتف أو رقم قومي) مع مراعاة الخصوصية
-  const executeSmartSearch = useCallback(async (val: string) => {
-    const clean = val.trim();
-    if (!clean) return;
+  // استعلام آمن: يتطلب كود التتبع/الرقم القومي + رقم الهاتف المسجل
+  const executeSmartSearch = useCallback(async (identifier: string, phone: string) => {
+    const clean = identifier.trim();
+    const cleanPhone = phone.trim();
+
+    setSearchError(null);
+    setSelectedComplaint(null);
+    setTimeline([]);
+    setResults([]);
+
+    if (!/^01[0125][0-9]{8}$/.test(cleanPhone)) {
+      setSearchError('يرجى إدخال رقم الهاتف المسجل مع الطلب (11 رقماً يبدأ بـ 01).');
+      setSearched(false);
+      return;
+    }
+
+    if (!clean) {
+      setSearchError('يرجى إدخال كود التتبع أو الرقم القومي.');
+      setSearched(false);
+      return;
+    }
 
     setIsLoading(true);
     setSearched(true);
-    setSelectedComplaint(null);
-    setTimeline([]);
+    setVerifiedPhone(cleanPhone);
 
     try {
-      let found: Complaint[] = [];
-
-      // 1. هل هو رقم قومي (14 رقماً)؟
-      if (/^\d{14}$/.test(clean)) {
-        found = await complaintsService.search({ nationalId: clean });
-      }
-      // 2. هل هو رقم هاتف محمول؟
-      else if (/^01[0125][0-9]{8}$/.test(clean) || clean.startsWith('01')) {
-        found = await complaintsService.search({ phone: clean });
-      }
-      // 3. كود شكوى خاص
-      else {
-        const item = await complaintsService.getByTrackingCode(clean);
-        if (item) {
-          found = [item];
-        } else {
-          found = await complaintsService.search({ phone: clean });
-        }
-      }
+      const found = /^\d{14}$/.test(clean)
+        ? await complaintsService.track({ nationalId: clean, phone: cleanPhone })
+        : await complaintsService.track({ code: clean, phone: cleanPhone });
 
       setResults(found);
       if (found.length === 1) {
-        handleSelectComplaint(found[0]);
+        await handleSelectComplaint(found[0], cleanPhone);
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setSearchError('تعذر إتمام الاستعلام. يرجى المحاولة مرة أخرى.');
     } finally {
       setIsLoading(false);
     }
   }, [handleSelectComplaint]);
 
-  // البحث التلقائي إذا جاء الرابط عبر QR Code أو كود تتبع ?code=...
-  useEffect(() => {
-    if (initialCode) {
-      setSearchInput(initialCode);
-      executeSmartSearch(initialCode);
-    }
-  }, [initialCode, executeSmartSearch]);
-
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    executeSmartSearch(searchInput);
+    executeSmartSearch(searchInput, phoneInput);
   };
 
   // شريط مسار الحالة (Stepper)
@@ -135,11 +130,6 @@ function TrackContent() {
     return `${phone.slice(0, 3)}••••${phone.slice(-3)}`;
   };
 
-  const maskNationalId = (natId: string) => {
-    if (!natId || natId.length < 14) return '••••••••••••••';
-    return `${natId.slice(0, 3)}•••••••${natId.slice(-4)}`;
-  };
-
   return (
     <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto flex-1 w-full">
       {/* الترويسة */}
@@ -164,36 +154,59 @@ function TrackContent() {
         </p>
       </div>
 
-      {/* حقل البحث الذكي الموحد */}
+      {/* حقل البحث الآمن: كود/رقم قومي + رقم الهاتف */}
       <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-sm mb-6">
-        <form onSubmit={handleFormSubmit} className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="اكتب كود الشكوى (SH-...) أو رقم الهاتف المحمول..."
-              className="w-full pl-4 pr-11 py-3.5 rounded-2xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0] text-sm font-medium transition text-right"
-              dir="auto"
-            />
-            <Search className="w-5 h-5 text-slate-400 absolute right-4 top-4" />
+        <form onSubmit={handleFormSubmit} className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="كود الشكوى (SH-...) أو الرقم القومي"
+                className="w-full pl-4 pr-11 py-3.5 rounded-2xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0] text-sm font-medium transition text-right"
+                dir="auto"
+              />
+              <Search className="w-5 h-5 text-slate-400 absolute right-4 top-4" />
+            </div>
+
+            <div className="relative">
+              <input
+                type="tel"
+                inputMode="numeric"
+                maxLength={11}
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ''))}
+                placeholder="رقم الهاتف المسجل مع الطلب"
+                className="w-full pl-4 pr-11 py-3.5 rounded-2xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0] text-sm font-mono transition text-right"
+                dir="ltr"
+              />
+              <Phone className="w-5 h-5 text-slate-400 absolute right-4 top-4" />
+            </div>
           </div>
 
           <button
             type="submit"
-            disabled={isLoading || !searchInput.trim()}
-            className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-extrabold text-sm bg-[#133063] hover:bg-[#0d234a] active:scale-95 text-white transition disabled:opacity-50 shadow-md shrink-0 cursor-pointer"
+            disabled={isLoading || !searchInput.trim() || !phoneInput.trim()}
+            className="w-full inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-extrabold text-sm bg-[#133063] hover:bg-[#0d234a] active:scale-95 text-white transition disabled:opacity-50 shadow-md cursor-pointer"
           >
-            {isLoading ? 'جاري الاستعلام...' : 'استعلام الآن'}
+            {isLoading ? 'جاري الاستعلام...' : 'استعلام آمن الآن'}
           </button>
         </form>
 
-        <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400 px-2">
+        {searchError && (
+          <div className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+            <span>{searchError}</span>
+          </div>
+        )}
+
+        <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400 px-2 gap-2">
           <span className="flex items-center gap-1 text-emerald-700 font-bold">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            استعلام مشفر وآمن طبقاً لسياسة الخصوصية
+            يلزم تطابق كود الطلب أو الرقم القومي مع رقم الهاتف لحماية الخصوصية
           </span>
-          <span>مثال: SH-1030-01 أو 01012345678</span>
+          <span className="hidden sm:inline">مثال: SH-1030-01 + 01012345678</span>
         </div>
       </div>
 
@@ -203,7 +216,7 @@ function TrackContent() {
           <Lock className="w-4 h-4 text-[#00a3e0] shrink-0" />
           <span><b>سرية البيانات:</b> كافة البيانات الشخصية والشكاوى تخضع لأعلى معايير السرية والأمان المعتمدة.</span>
         </div>
-        <span className="text-[10px] text-slate-400 font-bold hidden sm:inline">أمانة التنظيم واللجان</span>
+        <span className="text-[10px] text-slate-400 font-bold hidden sm:inline">أمانة التنظيم</span>
       </div>
 
       {/* نتائج البحث المتعددة */}
@@ -216,7 +229,7 @@ function TrackContent() {
             {results.map((c) => (
               <div
                 key={c.id}
-                onClick={() => handleSelectComplaint(c)}
+                onClick={() => handleSelectComplaint(c, verifiedPhone)}
                 className="py-3.5 px-3 flex items-center justify-between hover:bg-blue-50/50 rounded-2xl cursor-pointer transition"
               >
                 <div>
@@ -225,7 +238,7 @@ function TrackContent() {
                       {c.tracking_code}
                     </span>
                     <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold">
-                      {c.committee_name || 'لجنة رعاية الشباب'}
+                      {c.committee_name || 'أمانة الشباب'}
                     </span>
                   </div>
                   <span className="text-xs font-semibold text-slate-700 block mt-0.5">{c.title}</span>
@@ -251,7 +264,7 @@ function TrackContent() {
             لم يتم العثور على أي شكاوى مسجلة
           </h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto mb-5 leading-relaxed">
-            يرجى التأكد من كتابة كود الشكوى أو رقم الهاتف بدقة، أو يمكنك تقديم طلب جديد فوراً وسيتولى مسؤولو اللجنة متابعته.
+            يرجى التأكد من كتابة كود الشكوى أو رقم الهاتف بدقة، أو يمكنك تقديم طلب جديد فوراً وسيتولى مسؤولو أمانة الشباب بمركز بركة السبع متابعته.
           </p>
           <Link
             href="/submit"
@@ -273,7 +286,7 @@ function TrackContent() {
                   {selectedComplaint.tracking_code}
                 </span>
                 <span className="inline-block mr-2 px-2.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-[#133063] border border-blue-200">
-                  {selectedComplaint.committee_name || 'لجنة رعاية الشباب'}
+                  {selectedComplaint.committee_name || 'أمانة الشباب'}
                 </span>
               </div>
               <div className="flex items-center gap-2.5">
@@ -357,12 +370,12 @@ function TrackContent() {
               </div>
 
               {/* الرد والتأشيرة الرسمية للمواطن */}
-              {selectedComplaint.admin_notes && (
+              {selectedComplaint.public_response && (
                 <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-[#133063]">
                   <span className="font-extrabold block mb-1 text-xs text-[#00a3e0]">
-                    الرد الرسمي المعتمد من مسؤولي اللجنة:
+                    الرد الرسمي المعتمد من مسؤولي أمانة الشباب:
                   </span>
-                  <p className="text-xs leading-relaxed font-semibold">{selectedComplaint.admin_notes}</p>
+                  <p className="text-xs leading-relaxed font-semibold">{selectedComplaint.public_response}</p>
                 </div>
               )}
             </div>

@@ -1,4 +1,4 @@
-import { Complaint, ComplaintTimeline, ComplaintStatus } from '@/types/database';
+import { Complaint, ComplaintTimeline, ComplaintStatus, STATUS_META } from '@/types/database';
 import { supabase, isSupabaseConfigured } from './supabase/client';
 import { generateTrackingCode } from './generateCode';
 
@@ -12,15 +12,15 @@ const INITIAL_DEMO_COMPLAINTS: Complaint[] = [
     primary_phone: '01012345678',
     alt_contacts: [{ type: 'whatsapp', value: '01012345678' }],
     title: 'طلب دعم وتجهيز ملتقى توظيف شباب الخريجين',
-    description: 'نرجو من لجنة رعاية الشباب الموقرة التنسيق لتنظيم ملتقى توظيف مصغر بالتعاون مع شركات القطاع الخاص لتوفير فرص عمل لشباب الدائرة وتأهيلهم لسوق العمل.',
+    description: 'نرجو من أمانة الشباب بمركز بركة السبع التنسيق لتنظيم ملتقى توظيف مصغر بالتعاون مع شركات القطاع الخاص لتوفير فرص عمل لشباب الدائرة وتأهيلهم لسوق العمل.',
     status: 'under_review',
     committee_id: 'youth',
-    committee_name: 'لجنة رعاية الشباب',
-    location_address: 'مركز شباب المدينة - الصالة المغطاة',
+    committee_name: 'أمانة الشباب',
+    location_address: 'مركز شباب بركة السبع - الصالة المغطاة',
     location_lat: 30.0444,
     location_lng: 31.2357,
     attachments: [],
-    admin_notes: 'تم إحالة الموضوع لمقرر اللجنة للتنسيق مع الشركات الراعية.',
+    admin_notes: 'تم إحالة الموضوع للأمين المساعد للتنسيق مع الشركات الراعية.',
     created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     updated_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
   },
@@ -38,7 +38,7 @@ const INITIAL_DEMO_COMPLAINTS: Complaint[] = [
     description: 'أعمدة الإنارة في الملعب الخماسي معطلة منذ أسبوع والشباب لا يستطيعون ممارسة الأنشطة الرياضية ليلاً، نرجو الصيانة العاجلة لتشجيع ممارسة الرياضة.',
     status: 'in_progress',
     committee_id: 'youth',
-    committee_name: 'لجنة رعاية الشباب',
+    committee_name: 'أمانة الشباب',
     location_address: 'ملعب قرية الأمل الرياضي',
     location_lat: 30.0512,
     location_lng: 31.2421,
@@ -57,8 +57,8 @@ const INITIAL_DEMO_COMPLAINTS: Complaint[] = [
     title: 'إنشاء دورة تدريبية مجانية في البرمجة والذكاء الاصطناعي',
     description: 'مقترح لإطلاق مبادرة لتأهيل 50 شاباً وفتاة في مهارات العمل الحر والبرمجة بالتعاون مع مدربين متطوعين لدعم الابتكار التقني.',
     status: 'resolved',
-    committee_id: 'citizen_affairs',
-    committee_name: 'لجنة خدمة المواطنين والتضامن الاجتماعي',
+    committee_id: 'youth',
+    committee_name: 'أمانة الشباب',
     location_address: 'مقر قاعة المؤتمرات',
     attachments: [],
     admin_notes: 'تمت الموافقة وتدشين الدورة التدريبية يوم السبت القادم بحضور 60 متدرباً.',
@@ -76,7 +76,7 @@ const INITIAL_DEMO_COMPLAINTS: Complaint[] = [
     description: 'فريق الناشئين حقق المركز الأول على مستوى المنطقة ويحتاج مضارب وكرات تدريبية إضافية للاستعداد للبطولة الجمهورية القادمة.',
     status: 'new',
     committee_id: 'youth',
-    committee_name: 'لجنة رعاية الشباب',
+    committee_name: 'أمانة الشباب',
     location_address: 'نادي شباب المستقبل',
     attachments: [],
     admin_notes: null,
@@ -98,8 +98,8 @@ const INITIAL_DEMO_TIMELINE: ComplaintTimeline[] = [
     id: 't2',
     complaint_id: 'c101-demo-uuid',
     status: 'under_review',
-    note: 'تم إحالة الموضوع لمقرر اللجنة للتنسيق مع الشركات الراعية.',
-    actor_name: 'م. محمود الجزار (مسؤول اللجنة)',
+    note: 'تم إحالة الموضوع لمقرر أمانة الشباب للتنسيق مع الشركات الراعية.',
+    actor_name: 'م. محمود الجزار (مسؤول أمانة الشباب)',
     created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
   },
   {
@@ -115,7 +115,7 @@ const INITIAL_DEMO_TIMELINE: ComplaintTimeline[] = [
     complaint_id: 'c102-demo-uuid',
     status: 'in_progress',
     note: 'تم التواصل مع فني الكهرباء وتوفير الكشافات، جاري التركيب غداً.',
-    actor_name: 'أ. محمد العزب (عضو اللجنة)',
+    actor_name: 'أ. محمد العزب (عضو أمانة الشباب)',
     created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
   },
   {
@@ -123,7 +123,7 @@ const INITIAL_DEMO_TIMELINE: ComplaintTimeline[] = [
     complaint_id: 'c103-demo-uuid',
     status: 'resolved',
     note: 'تمت الموافقة وتدشين الدورة التدريبية بنجاح.',
-    actor_name: 'أ. سامر التلاوي (رئيس اللجنة)',
+    actor_name: 'أ. سامر التلاوي (رئيس أمانة الشباب)',
     created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
   },
 ];
@@ -177,7 +177,9 @@ function saveLocalTimeline(timeline: ComplaintTimeline[]): void {
 
 export const complaintsService = {
   /**
-   * جلب كافة الشكاوى
+   * جلب الشكاوى المسموح بها للمستخدم الحالي.
+   * سياسات RLS تحدد النطاق: المشرف العام يرى الكل،
+   * والمواطن يرى طلباته فقط.
    */
   async getAll(): Promise<Complaint[]> {
     if (isSupabaseConfigured && supabase) {
@@ -186,37 +188,19 @@ export const complaintsService = {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
-        return data as Complaint[];
+      if (error) {
+        // فشل مغلق: لا نعود إلى بيانات محلية قد تسرب معلومات.
+        console.error('Supabase fetch failed:', error.message);
+        return [];
       }
-      console.warn('Supabase fetch failed, falling back to local store:', error);
+
+      return (data || []) as Complaint[];
     }
     return getLocalComplaints();
   },
 
   /**
-   * البحث عن شكوى بكود التتبع
-   */
-  async getByTrackingCode(code: string): Promise<Complaint | null> {
-    const cleanCode = code.trim().toUpperCase();
-    if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase
-        .from('complaints')
-        .select('*')
-        .ilike('tracking_code', cleanCode)
-        .maybeSingle();
-
-      if (!error && data) {
-        return data as Complaint;
-      }
-    }
-
-    const all = getLocalComplaints();
-    return all.find((c) => c.tracking_code.toUpperCase() === cleanCode) || null;
-  },
-
-  /**
-   * البحث عن شكوى بالمعرف الداخلي أو كود التتبع
+   * جلب شكوى بالمعرف الداخلي (للمشرفين/الطباعة فقط، وفق RLS).
    */
   async getById(id: string): Promise<Complaint | null> {
     const cleanId = (id || '').trim();
@@ -226,51 +210,126 @@ export const complaintsService = {
       const { data, error } = await supabase
         .from('complaints')
         .select('*')
-        .or(`id.eq.${cleanId},tracking_code.ilike.${cleanId}`)
+        .eq('id', cleanId)
         .maybeSingle();
 
-      if (!error && data) {
-        return data as Complaint;
-      }
+      if (error || !data) return null;
+      return data as Complaint;
     }
 
     const all = getLocalComplaints();
-    return all.find((c) => c.id === cleanId || c.tracking_code.toUpperCase() === cleanId.toUpperCase()) || null;
+    return (
+      all.find(
+        (c) =>
+          c.id === cleanId ||
+          c.tracking_code.toUpperCase() === cleanId.toUpperCase()
+      ) || null
+    );
   },
 
   /**
-   * استعلام متعدد (كود، هاتف، رقم قومي)
+   * استعلام عام آمن: يتطلب رقم الهاتف دائماً + كود التتبع أو الرقم القومي.
+   * جدول الشكاوى غير قابل للقراءة العامة، لذا يتم الاستعلام عبر RPC آمن.
    */
-  async search(query: { code?: string; phone?: string; nationalId?: string }): Promise<Complaint[]> {
-    const code = query.code?.trim().toUpperCase();
-    const phone = query.phone?.trim();
-    const natId = query.nationalId?.trim();
+  async track(query: {
+    code?: string;
+    phone: string;
+    nationalId?: string;
+  }): Promise<Complaint[]> {
+    const code = query.code?.trim().toUpperCase() || null;
+    const phone = query.phone?.trim() || '';
+    const nationalId = query.nationalId?.trim() || null;
+
+    if (!phone || (!code && !nationalId)) return [];
 
     if (isSupabaseConfigured && supabase) {
-      let req = supabase.from('complaints').select('*');
-      if (code) req = req.ilike('tracking_code', code);
-      if (phone) req = req.eq('primary_phone', phone);
-      if (natId) req = req.eq('national_id', natId);
+      const { data, error } = await supabase.rpc('track_complaints', {
+        p_code: code,
+        p_phone: phone,
+        p_national_id: nationalId,
+      });
 
-      const { data, error } = await req.order('created_at', { ascending: false });
-      if (!error && data) {
-        return data as Complaint[];
+      if (error) {
+        console.error('Tracking lookup failed:', error.message);
+        return [];
       }
+
+      // القيمة الراجعة JSONB محجوبة الحقول الحساسة (admin_notes / citizen_id).
+      return (data || []) as unknown as Complaint[];
     }
 
     const all = getLocalComplaints();
     return all.filter((c) => {
+      if (c.primary_phone !== phone) return false;
       if (code && c.tracking_code.toUpperCase() === code) return true;
-      if (phone && c.primary_phone === phone) return true;
-      if (natId && c.national_id === natId) return true;
+      if (nationalId && c.national_id === nationalId) return true;
       return false;
     });
   },
 
   /**
-   * إنشاء شكوى جديدة
+   * البحث عن شكوى بكود التتبع (لفريق العمل فقط ضمن RLS).
+   * لا يُستخدم للاستعلام العام؛ استخدم track() مع الهاتف.
+   */
+  async getByTrackingCode(code: string): Promise<Complaint | null> {
+    const cleanCode = code.trim().toUpperCase();
+    if (!cleanCode) return null;
+
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('complaints')
+        .select('*')
+        .ilike('tracking_code', cleanCode)
+        .maybeSingle();
+
+      if (error || !data) return null;
+      return data as Complaint;
+    }
+
+    const all = getLocalComplaints();
+    return all.find((c) => c.tracking_code.toUpperCase() === cleanCode) || null;
+  },
+
+  /**
+   * إنشاء شكوى جديدة.
+   *
+   * في وضع Supabase يتم التقديم عبر RPC `submit_complaint` (SECURITY DEFINER):
+   * - يضبط citizen_id من الجلسة (لا يمكن انتحال حساب مواطن آخر).
+   * - يفرض status='new' و admin_notes/public_response = NULL.
+   * - يولّد كود التتبع على الخادم من تسلسل مضمون عدم التكرار.
+   * - يعيد الصف كاملاً رغم عدم وجود سياسة قراءة عامة على الجدول.
    */
   async create(payload: Omit<Complaint, 'id' | 'tracking_code' | 'created_at' | 'updated_at'>): Promise<Complaint> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase.rpc('submit_complaint', {
+        p_citizen_name: payload.citizen_name,
+        p_national_id: payload.national_id,
+        p_primary_phone: payload.primary_phone,
+        p_title: payload.title,
+        p_description: payload.description,
+        p_alt_contacts: payload.alt_contacts ?? [],
+        p_committee_id: payload.committee_id ?? 'youth',
+        p_committee_name: payload.committee_name ?? 'أمانة الشباب',
+        p_is_confidential: Boolean(payload.is_confidential),
+        p_location_lat: payload.location_lat ?? null,
+        p_location_lng: payload.location_lng ?? null,
+        p_location_address: payload.location_address ?? null,
+        p_attachments: payload.attachments ?? [],
+      });
+
+      if (error || !data) {
+        // لا نحفظ محلياً عندما يكون Supabase مهيأً: قد يؤدي ذلك إلى إيهام
+        // المواطن بأن الطلب مسجل بينما لم يصل للمنظومة.
+        throw new Error(
+          error?.message ||
+            'تعذر حفظ الطلب في قاعدة البيانات. يرجى المحاولة مرة أخرى.'
+        );
+      }
+
+      // السجل الزمني الأولي يُضاف تلقائياً بواسطة trigger في قاعدة البيانات.
+      return data as Complaint;
+    }
+
     const all = getLocalComplaints();
     const todaySequence = all.filter((c) => {
       const todayStr = new Date().toISOString().split('T')[0];
@@ -283,34 +342,13 @@ export const complaintsService = {
 
     const newComplaint: Complaint = {
       committee_id: 'youth',
-      committee_name: 'لجنة رعاية الشباب',
+      committee_name: 'أمانة الشباب',
       ...payload,
       id: newId,
       tracking_code: trackingCode,
       created_at: now,
       updated_at: now,
     };
-
-    if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase
-        .from('complaints')
-        .insert([newComplaint])
-        .select()
-        .single();
-
-      if (!error && data) {
-        // إضافة حدث في السجل الزمني
-        await supabase.from('complaint_timeline').insert([{
-          complaint_id: data.id,
-          status: 'new',
-          note: 'تم تقديم الشكوى بنجاح عبر المنظومة الإلكترونية.',
-          actor_name: 'المنظومة الإلكترونية',
-        }]);
-
-        return data as Complaint;
-      }
-      console.warn('فشل الحفظ في Supabase، جاري الحفظ المحلي:', error);
-    }
 
     // حفظ محلي
     const updated = [newComplaint, ...all];
@@ -332,15 +370,23 @@ export const complaintsService = {
   },
 
   /**
-   * تحديث حالة الشكوى وإضافة ملاحظة للسجل الزمني
+   * تحديث حالة الشكوى وإضافة ملاحظة للسجل الزمني.
+   *
+   * `note` ملاحظة داخلية لا تظهر للمواطن. لنشر رد رسمي للمواطن يجب تمرير
+   * `publicResponse` صراحةً وبموافقة الموظف (خانة "نشر الرد للمواطن").
    */
   async updateStatus(
     complaintId: string,
     newStatus: ComplaintStatus,
     note?: string,
-    actorName: string = 'مسؤول لجنة الشباب'
+    actorName: string = 'مسؤول أمانة الشباب',
+    publicResponse?: string
   ): Promise<boolean> {
     const now = new Date().toISOString();
+    const publishedResponse = publicResponse?.trim() || undefined;
+    const timelineNote =
+      publishedResponse ||
+      `تم تحديث حالة الطلب إلى: ${STATUS_META[newStatus]?.label || newStatus}`;
 
     if (isSupabaseConfigured && supabase) {
       const { error: updateError } = await supabase
@@ -348,19 +394,24 @@ export const complaintsService = {
         .update({
           status: newStatus,
           admin_notes: note || undefined,
+          public_response: publishedResponse,
           updated_at: now,
         })
         .eq('id', complaintId);
 
-      if (!updateError) {
-        await supabase.from('complaint_timeline').insert([{
-          complaint_id: complaintId,
-          status: newStatus,
-          note: note || `تم تحديث الحالة إلى "${newStatus}"`,
-          actor_name: actorName,
-        }]);
-        return true;
+      if (updateError) {
+        throw new Error(updateError.message);
       }
+
+      // السجل الزمني عام: لا نكتب فيه الملاحظات الداخلية إطلاقاً.
+      await supabase.from('complaint_timeline').insert([{
+        complaint_id: complaintId,
+        status: newStatus,
+        note: timelineNote,
+        actor_name: actorName,
+        is_public: true,
+      }]);
+      return true;
     }
 
     // تحديث محلي
@@ -369,6 +420,7 @@ export const complaintsService = {
     if (index !== -1) {
       all[index].status = newStatus;
       if (note) all[index].admin_notes = note;
+      if (publishedResponse) all[index].public_response = publishedResponse;
       all[index].updated_at = now;
       saveLocalComplaints(all);
 
@@ -377,7 +429,7 @@ export const complaintsService = {
         id: `t-${Date.now()}`,
         complaint_id: complaintId,
         status: newStatus,
-        note: note || `تم تحديث الحالة إلى "${newStatus}"`,
+        note: timelineNote,
         actor_name: actorName,
         created_at: now,
       });
@@ -389,72 +441,36 @@ export const complaintsService = {
   },
 
   /**
-   * تحويل الشكوى إلى لجنة أخرى
+   * جلب السجل الزمني لشكوى معينة.
+   * للاستعلام العام يجب تمرير رقم الهاتف ليتم التحقق منه داخل RPC آمن.
+   * لفريق العمل/صاحب الطلب المسجل يمكن الاستعلام مباشرة وفق RLS.
    */
-  async updateCommittee(
+  async getTimeline(
     complaintId: string,
-    committeeId: string,
-    committeeName: string,
-    actorName: string = 'الأدمن العام'
-  ): Promise<boolean> {
-    const now = new Date().toISOString();
+    phone?: string
+  ): Promise<ComplaintTimeline[]> {
     if (isSupabaseConfigured && supabase) {
-      await supabase
-        .from('complaints')
-        .update({
-          committee_id: committeeId,
-          committee_name: committeeName,
-          updated_at: now,
-        })
-        .eq('id', complaintId);
+      if (phone) {
+        const { data, error } = await supabase.rpc('track_complaint_timeline', {
+          p_complaint_id: complaintId,
+          p_phone: phone.trim(),
+        });
 
-      await supabase.from('complaint_timeline').insert([{
-        complaint_id: complaintId,
-        status: 'under_review',
-        note: `تم تحويل الشكوى إلى: ${committeeName}`,
-        actor_name: actorName,
-      }]);
-    }
+        if (error) {
+          console.error('Timeline lookup failed:', error.message);
+          return [];
+        }
+        return (data || []) as ComplaintTimeline[];
+      }
 
-    const all = getLocalComplaints();
-    const idx = all.findIndex((c) => c.id === complaintId);
-    if (idx !== -1) {
-      all[idx] = {
-        ...all[idx],
-        committee_id: committeeId,
-        committee_name: committeeName,
-        updated_at: now,
-      };
-      saveLocalComplaints(all);
-
-      const timeline = getLocalTimeline();
-      timeline.push({
-        id: `t-${Date.now()}`,
-        complaint_id: complaintId,
-        status: all[idx].status,
-        note: `تم تحويل الشكوى إلى: ${committeeName}`,
-        actor_name: actorName,
-        created_at: now,
-      });
-      saveLocalTimeline(timeline);
-    }
-    return true;
-  },
-
-  /**
-   * جلب السجل الزمني لشكوى معينة
-   */
-  async getTimeline(complaintId: string): Promise<ComplaintTimeline[]> {
-    if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from('complaint_timeline')
         .select('*')
         .eq('complaint_id', complaintId)
         .order('created_at', { ascending: true });
 
-      if (!error && data) {
-        return data as ComplaintTimeline[];
-      }
+      if (error) return [];
+      return (data || []) as ComplaintTimeline[];
     }
 
     const timeline = getLocalTimeline();

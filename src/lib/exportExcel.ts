@@ -20,7 +20,7 @@ export function exportComplaintsToExcel(complaints: Complaint[], filename?: stri
     'تفاصيل الشكوى': c.description,
     'الحالة': STATUS_META[c.status]?.label || c.status,
     'الموقع / العنوان': c.location_address || 'غير محدد',
-    'ملاحظات اللجنة': c.admin_notes || 'لا توجد ملاحظات',
+    'ملاحظات الأمانة': c.admin_notes || 'لا توجد ملاحظات',
   }));
 
   // إنشاء ورقة العمل والمصنف
@@ -49,7 +49,7 @@ export function exportComplaintsToExcel(complaints: Complaint[], filename?: stri
 
   // اسم الملف مع تاريخ اليوم
   const today = new Date().toISOString().split('T')[0];
-  const finalFilename = filename || `كشف_شكاوى_لجنة_الشباب_${today}.xlsx`;
+  const finalFilename = filename || `كشف_شكاوى_أمانة_الشباب_${today}.xlsx`;
 
   XLSX.writeFile(workbook, finalFilename);
 }

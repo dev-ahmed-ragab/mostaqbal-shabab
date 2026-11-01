@@ -1,18 +1,26 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { Heart, ShieldCheck, Phone, Mail, MapPin, ExternalLink, Globe } from 'lucide-react';
 
-export const Footer: React.FC = () => {
+function FooterInner() {
+  const pathname = usePathname();
   const currentYear = 2026;
+
+  // إخفاء الفوتر العام للمواطنين داخل لوحة المشرفين وصفحات الطباعة
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
+
   return (
     <footer className="bg-slate-900 text-slate-300 border-t border-slate-800 no-print mt-auto relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           
-          {/* العمود 1: التعريف الرسمي بالحزب واللجنة */}
+          {/* العمود 1: التعريف الرسمي بالحزب والأمانة */}
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center gap-3.5">
               <div className="relative w-12 h-14 shrink-0 bg-white/5 p-1 rounded-xl border border-white/10">
@@ -29,16 +37,16 @@ export const Footer: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-[#00a3e0] block">حزب مستقبل وطن</span>
                   <span className="px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 text-[10px] font-bold border border-amber-400/30">
-                    محافظة المنوفية
+                    أمانة مركز بركة السبع
                   </span>
                 </div>
-                <h3 className="text-base font-extrabold text-white">لجنة رعاية الشباب</h3>
-                <p className="text-[11px] text-slate-400 font-semibold">كلنا نعمل من أجل مصر</p>
+                <h3 className="text-base font-extrabold text-white">أمانة الشباب</h3>
+                <p className="text-[11px] text-slate-400 font-semibold">محافظة المنوفية</p>
               </div>
             </div>
 
             <p className="text-sm text-slate-400 leading-relaxed max-w-lg">
-              المنظومة الإلكترونية الرسمية المعتمدة لتلقي وفحص ومتابعة شكاوى ومقترحات ومطالب قطاع الشباب، والتنسيق الميداني المباشر مع الأجهزة التنفيذية ومراكز الشباب بالمحافظة تحت إشراف أمانة التنظيم.
+              المنظومة الإلكترونية الرسمية المعتمدة لتلقي وفحص ومتابعة شكاوى ومقترحات ومطالب قطاع الشباب، والتنسيق الميداني المباشر مع الأجهزة التنفيذية ومراكز الشباب بمركز وقرى بركة السبع ومحافظة المنوفية.
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -92,8 +100,8 @@ export const Footer: React.FC = () => {
               <li className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-[#00a3e0] shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-slate-200 block text-[11px]">مقر أمانة محافظة المنوفية:</strong>
-                  شبين الكوم - شارع جمال عبد الناصر (بجوار مجمع المصالح الحكومية)
+                  <strong className="text-slate-200 block text-[11px]">مقر أمانة حزب مستقبل وطن بمركز بركة السبع:</strong>
+                  بركة السبع - محافظة المنوفية (بجوار مجلس المدينة)
                 </span>
               </li>
               <li className="flex items-center gap-2.5">
@@ -133,7 +141,7 @@ export const Footer: React.FC = () => {
                 unoptimized
               />
             </div>
-            <p>© {currentYear} جمهورية مصر العربية | حزب مستقبل وطن - لجنة رعاية الشباب. جميع الحقوق محفوظة.</p>
+            <p>© {currentYear} جمهورية مصر العربية | حزب مستقبل وطن - أمانة الشباب بمركز بركة السبع. جميع الحقوق محفوظة.</p>
           </div>
           
           <div className="flex items-center gap-3">
@@ -147,5 +155,13 @@ export const Footer: React.FC = () => {
         </div>
       </div>
     </footer>
+  );
+}
+
+export const Footer: React.FC = () => {
+  return (
+    <Suspense fallback={null}>
+      <FooterInner />
+    </Suspense>
   );
 };

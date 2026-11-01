@@ -28,6 +28,8 @@ export async function generatePdfFromElement(
       allowTaint: false, // يجب أن تكون false لمنع SecurityError في toDataURL
       backgroundColor: '#ffffff',
       logging: false,
+      scrollX: 0,
+      scrollY: 0,
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
@@ -41,7 +43,7 @@ export async function generatePdfFromElement(
     const pageWidth = orientation === 'portrait' ? 210 : 297;
     const pageHeight = orientation === 'portrait' ? 297 : 210;
 
-    const margin = 10;
+    const margin = 8;
     const usableWidth = pageWidth - margin * 2;
     const usableHeight = pageHeight - margin * 2;
 
@@ -85,9 +87,6 @@ export async function generatePdfFromElement(
     pdf.save(filename);
   } catch (error) {
     console.error('فشل توليد ملف الـ PDF:', error);
-    // إتاحة خيار الطباعة المباشرة كبديل فوري في حال قيود المتصفح
-    if (confirm('حدث خطأ أثناء تنزيل الـ PDF، هل تود استخدام نافذة الطباعة/الحفظ كـ PDF مباشرة؟')) {
-      window.print();
-    }
+    throw error;
   }
 }

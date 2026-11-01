@@ -16,22 +16,31 @@ import {
   Download
 } from 'lucide-react';
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 export default function HomePage() {
   const [savedCode, setSavedCode] = useState<string | null>(null);
   const [showPwaToast, setShowPwaToast] = useState(true);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
     try {
       const code = localStorage.getItem('last_submitted_complaint_code');
       if (code) {
+        // قراءة قيمة موجودة في المتصفح فقط بعد التركيب لتفادي اختلاف SSR.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSavedCode(code);
       }
     } catch {
       // ignore
     }
 
-    const handleBeforeInstall = (e: any) => {
+    const handleBeforeInstall = (event: Event) => {
+      const e = event as BeforeInstallPromptEvent;
       e.preventDefault();
       setDeferredPrompt(e);
       setShowPwaToast(true);
@@ -94,6 +103,7 @@ export default function HomePage() {
             loop
             muted
             playsInline
+            preload="auto"
             className="w-full h-full object-cover opacity-85 filter contrast-110 saturate-125"
             src="/egypt-flag.mp4"
           />
@@ -144,12 +154,12 @@ export default function HomePage() {
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
             <span className="text-amber-300 font-extrabold">كلنا نعمل من أجل مصر</span>
             <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-            <span className="text-slate-200">لجنة رعاية الشباب</span>
+            <span className="text-slate-200">أمانة الشباب بمركز بركة السبع</span>
           </div>
         </div>
       </section>
 
-      {/* 2. السيكشن الثاني: حزب مستقبل وطن - لجنة رعاية الشباب (الهوية والرسالة المبسطة) */}
+      {/* 2. السيكشن الثاني: حزب مستقبل وطن - أمانة الشباب (الهوية والرسالة المبسطة) */}
       <section className="py-20 bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
@@ -171,10 +181,10 @@ export default function HomePage() {
                 حزب مستقبل وطن
               </span>
               <h2 className="text-xl font-extrabold text-[#133063] mt-1">
-                لجنة رعاية الشباب
+                أمانة الشباب
               </h2>
-              <span className="text-xs text-slate-400 font-semibold mt-1">
-                محافظة المنوفية
+              <span className="text-xs text-slate-500 font-semibold mt-1">
+                أمانة مركز بركة السبع • محافظة المنوفية
               </span>
             </div>
 
@@ -259,7 +269,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-lg font-bold text-slate-900 mb-2">مراجعة وتنسيق فوري</h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                تصل الشكوى فوراً للوحة مسؤولي لجنة رعاية الشباب لدراستها وتوجيه المعاينة الميدانية.
+                تصل الشكوى فوراً للوحة مسؤولي أمانة الشباب بمركز بركة السبع لدراستها وتوجيه المعاينة الميدانية.
               </p>
             </div>
 
@@ -276,7 +286,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 4. سيكشن الانضمام لكوادر ولجان شباب حزب مستقبل وطن */}
+      {/* 4. سيكشن الانضمام لكوادر شباب حزب مستقبل وطن */}
       <section className="py-16 bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-[#133063] rounded-3xl p-8 sm:p-12 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">
@@ -286,10 +296,10 @@ export default function HomePage() {
                 المشاركة المجتمعية والتطوع
               </div>
               <h3 className="text-2xl sm:text-3xl font-extrabold">
-                ترغب في الانضمام لكوادر شباب حزب مستقبل وطن؟
+                ترغب في الانضمام لكوادر شباب حزب مستقبل وطن بمركز بركة السبع؟
               </h3>
               <p className="text-sm text-slate-300 leading-relaxed">
-                نرحب بكل شاب وفتاة يمتلكون الرغبة في العمل العام وخدمة أهالينا والمشاركة في تنظيم الفعاليات والمبادرات الميدانية بالمحافظة.
+                نرحب بكل شاب وفتاة يمتلكون الرغبة في العمل العام وخدمة أهالينا والمشاركة في تنظيم الفعاليات والمبادرات الميدانية بمركز وقرى بركة السبع.
               </p>
             </div>
 
@@ -298,7 +308,7 @@ export default function HomePage() {
                 href="/committee"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-sm font-bold bg-[#00a3e0] text-white hover:bg-[#0284c7] shadow-md transition active:scale-95"
               >
-                تعرف على هيئة المكتب وقنوات الانضمام
+                تعرف على هيئة مكتب الأمانة وقنوات الانضمام
                 <ArrowLeft className="w-4 h-4" />
               </Link>
             </div>

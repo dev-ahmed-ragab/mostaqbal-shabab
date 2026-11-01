@@ -12,6 +12,13 @@ interface ComplaintReceiptProps {
   onClose?: () => void;
 }
 
+/** يخفي الرقم القومي. يقبل قيمة كاملة أو مقنّعة مسبقاً من الخادم. */
+function maskNationalId(value?: string | null): string {
+  if (!value) return '—';
+  if (value.includes('*')) return value;
+  return `${value.slice(0, 4)}******${value.slice(-4)}`;
+}
+
 export const ComplaintReceipt: React.FC<ComplaintReceiptProps> = ({
   complaint,
   onClose,
@@ -80,9 +87,9 @@ export const ComplaintReceipt: React.FC<ComplaintReceiptProps> = ({
               />
             </div>
             <div>
-              <span className="text-xs font-bold text-[#00a3e0] block">حزب مستقبل وطن</span>
+              <span className="text-[11px] font-bold text-[#00a3e0] block">حزب مستقبل وطن • أمانة بركة السبع</span>
               <h2 className="text-lg font-extrabold text-[#133063] leading-tight">
-                لجنة رعاية الشباب
+                أمانة الشباب
               </h2>
               <p className="text-[11px] text-slate-500 font-medium">
                 منظومة خدمة المواطنين وتلقي الشكاوى
@@ -159,7 +166,7 @@ export const ComplaintReceipt: React.FC<ComplaintReceiptProps> = ({
             <div>
               <span className="text-xs text-slate-500 block">الرقم القومي:</span>
               <span className="font-semibold text-slate-800 font-mono" dir="ltr">
-                {complaint.national_id.slice(0, 4)}******{complaint.national_id.slice(-4)}
+                {maskNationalId(complaint.national_id)}
               </span>
             </div>
             <div>

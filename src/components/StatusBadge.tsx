@@ -16,10 +16,10 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${meta.bgClass} ${meta.textClass} ${meta.borderClass} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-bold border shadow-2xs ${meta.bgClass} ${meta.textClass} ${meta.borderClass} ${className}`}
     >
       {showDot && (
-        <span className={`w-2 h-2 rounded-full animate-pulse ${meta.dotClass}`} />
+        <span className={`w-1.5 h-1.5 rounded-full ${meta.dotClass}`} />
       )}
       {meta.label}
     </span>

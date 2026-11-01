@@ -14,33 +14,18 @@ import {
   Loader2, 
   ArrowRight,
   Award,
-  UserCheck,
   Video,
-  Check,
   ShieldCheck
 } from 'lucide-react';
 import { AltContact, Attachment, Complaint } from '@/types/database';
 import { uploadAttachment } from '@/lib/supabaseStorage';
 import { complaintsService } from '@/lib/complaintsService';
-import { committeesService } from '@/lib/committeesService';
-import { CommitteeDef } from '@/lib/auth';
+import { YOUTH_SECRETARIAT } from '@/lib/auth';
 import { ComplaintReceipt } from '@/components/ComplaintReceipt';
 
 export default function SubmitComplaintPage() {
-  // اللجان المتاحة من المنظومة
-  const [committees, setCommittees] = useState<CommitteeDef[]>([]);
-  const [selectedCommitteeId, setSelectedCommitteeId] = useState('youth');
   const [isConfidential, setIsConfidential] = useState(false);
   const [privacyAgreed, setPrivacyAgreed] = useState(true);
-
-  // تحميل اللجان
-  React.useEffect(() => {
-    setCommittees(committeesService.getActive());
-    const unsub = committeesService.subscribe(() => {
-      setCommittees(committeesService.getActive());
-    });
-    return unsub;
-  }, []);
 
   // بيانات المواطن الأساسية
   const [fullName, setFullName] = useState('');
@@ -50,14 +35,8 @@ export default function SubmitComplaintPage() {
   // موضوع وتفاصيل الطلب
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('طلب عام / توجيه للجنة المختصة');
+  const [category, setCategory] = useState('طلب عام / توجيه لأمانة رعاية الشباب');
   const [priority, setPriority] = useState<'normal' | 'urgent' | 'emergency'>('normal');
-
-  // خيار الانضمام والترقية للجنة الشباب
-  const [wantsPromotion, setWantsPromotion] = useState(false);
-  const [promotionRole, setPromotionRole] = useState('عضو متابعة ميدانية');
-  const [qualification, setQualification] = useState('');
-  const [volunteerExperience, setVolunteerExperience] = useState('');
 
   // وسائل تواصل إضافية
   const [showAltContact, setShowAltContact] = useState(false);
@@ -196,15 +175,17 @@ export default function SubmitComplaintPage() {
         finalTitle = `[${category}] ${finalTitle}`;
       }
 
-      let fullDesc = description.trim();
+      const fullDesc = description.trim();
 
       const altList: AltContact[] = [];
       if (altPhone.trim()) {
         altList.push({ type: 'phone', value: altPhone.trim() });
       }
 
-      const activeComm = committees.find(c => c.id === selectedCommitteeId) || committees[0];
+      const activeComm = YOUTH_SECRETARIAT;
 
+      // الربط بالحساب يتم على الخادم من جلسة Supabase داخل submit_complaint،
+      // لذلك لا نرسل citizen_id من العميل.
       const created = await complaintsService.create({
         citizen_name: fullName.trim(),
         national_id: cleanNatId,
@@ -213,8 +194,8 @@ export default function SubmitComplaintPage() {
         title: finalTitle,
         description: fullDesc,
         status: 'new',
-        committee_id: activeComm?.id || 'youth',
-        committee_name: activeComm?.name || 'لجنة رعاية الشباب',
+        committee_id: activeComm.id,
+        committee_name: activeComm.name,
         is_confidential: isConfidential,
         location_lat: locationCoords?.lat || null,
         location_lng: locationCoords?.lng || null,
@@ -242,9 +223,13 @@ export default function SubmitComplaintPage() {
       }
 
       setSubmittedComplaint(created);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setErrorMessage(err.message || 'حدث خطأ أثناء حفظ الشكوى، يرجى المحاولة مرة أخرى.');
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : 'حدث خطأ أثناء حفظ الشكوى، يرجى المحاولة مرة أخرى.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -265,7 +250,7 @@ export default function SubmitComplaintPage() {
             تم تسجيل طلبك بنجاح
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-md mx-auto">
-            وصل طلبك إلى لجنة رعاية الشباب لبدء الفحص والمتابعة الميدانية الفورية.
+            وصل طلبك إلى أمانة الشباب بمركز بركة السبع لبدء الفحص والمتابعة الميدانية الفورية.
           </p>
         </div>
 
@@ -298,7 +283,7 @@ export default function SubmitComplaintPage() {
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xs font-bold text-[#00a3e0]">حزب مستقبل وطن</span>
           <span className="text-slate-300">•</span>
-          <span className="text-xs font-bold text-slate-500">لجنة رعاية الشباب</span>
+          <span className="text-xs font-bold text-slate-500">أمانة الشباب بمركز بركة السبع</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-[#133063] mb-1.5">
           تقديم شكوى أو طلب جديد
@@ -426,30 +411,17 @@ export default function SubmitComplaintPage() {
           </div>
 
           <div className="space-y-3.5">
-            {/* اختيار اللجنة الموجه إليها الطلب */}
+            {/* جهة توجيه الطلب: أمانة الشباب (أمانة واحدة) */}
             <div className="p-3.5 rounded-2xl bg-blue-50/50 border border-blue-200/80">
-              <label className="block text-xs font-bold text-[#133063] mb-1.5">
-                توجيه الطلب للجنة الحزبية المختصة:
-              </label>
-              <select
-                value={selectedCommitteeId}
-                onChange={(e) => setSelectedCommitteeId(e.target.value)}
-                className="w-full px-3.5 py-3 rounded-xl border border-slate-300 text-xs font-extrabold bg-white text-[#133063] focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 cursor-pointer"
-              >
-                {committees.map((comm) => (
-                  <option key={comm.id} value={comm.id}>
-                    {comm.name} — رئيس اللجنة: {comm.headName}
-                  </option>
-                ))}
-              </select>
-              {(() => {
-                const cur = committees.find(c => c.id === selectedCommitteeId);
-                return cur ? (
-                  <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
-                    <b>اختصاص اللجنة:</b> {cur.description}
-                  </p>
-                ) : null;
-              })()}
+              <span className="block text-xs font-bold text-[#133063] mb-1.5">
+                جهة استقبال الطلب:
+              </span>
+              <div className="w-full px-3.5 py-3 rounded-xl border border-slate-300 text-xs font-extrabold bg-white text-[#133063]">
+                {YOUTH_SECRETARIAT.name} — {YOUTH_SECRETARIAT.headName}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+                <b>اختصاص الأمانة:</b> {YOUTH_SECRETARIAT.description}
+              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -462,14 +434,14 @@ export default function SubmitComplaintPage() {
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full px-3.5 py-3 rounded-xl border border-slate-300 text-xs font-bold bg-white focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 cursor-pointer"
                 >
-                  <option value="طلب عام / توجيه للجنة المختصة">طلب عام / توجيه للجنة المختصة (الافتراضي)</option>
+                  <option value="طلب عام / توجيه لأمانة رعاية الشباب">طلب عام / توجيه لأمانة رعاية الشباب (الافتراضي)</option>
                   <option value="أنشطة وملاعب رياضية">أنشطة وملاعب رياضية</option>
                   <option value="توظيف وتأهيل لسوق العمل">توظيف وتأهيل لسوق العمل</option>
                   <option value="دورات تدريبية وتثقيفية">دورات تدريبية وتثقيفية</option>
                   <option value="دعم مبادرات وأفكار شبابية">دعم مبادرات وأفكار شبابية</option>
                   <option value="صيانة وتجهيز مراكز الشباب">صيانة وتجهيز مراكز الشباب</option>
                   <option value="استغاثة أو حالة طارئة">استغاثة أو حالة طارئة</option>
-                  <option value="مقترح عام للجنة">مقترح عام للجنة</option>
+                  <option value="مقترح عام لأمانة رعاية الشباب">مقترح عام لأمانة رعاية الشباب</option>
                 </select>
               </div>
 
@@ -524,7 +496,7 @@ export default function SubmitComplaintPage() {
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="اشرح المشكلة أو الطلب والمكان وما ترجوه من اللجنة بوضوح..."
+                placeholder="اشرح المشكلة أو الطلب والمكان وما ترجوه من أمانة الشباب بوضوح..."
                 className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0] text-sm font-medium transition leading-relaxed resize-y"
               />
             </div>
@@ -565,7 +537,7 @@ export default function SubmitComplaintPage() {
                 <span className="text-[11px] text-slate-500">
                   {locationCoords
                     ? `تم التقاط الموقع: ${locationCoords.lat.toFixed(4)}, ${locationCoords.lng.toFixed(4)}`
-                    : 'يساعد اللجنة على سرعة الانتقال والمعاينة الميدانية'}
+                    : 'يساعد أمانة الشباب على سرعة الانتقال والمعاينة الميدانية'}
                 </span>
               </div>
 
@@ -642,7 +614,7 @@ export default function SubmitComplaintPage() {
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center text-xs text-slate-500 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Award className="w-4 h-4 text-[#00a3e0]" />
-            <span>ترغب في التطوع أو الانضمام لفريق عمل لجنة رعاية الشباب؟</span>
+            <span>ترغب في التطوع أو الانضمام لفريق عمل أمانة الشباب؟</span>
           </div>
           <Link
             href="/committee"
@@ -668,7 +640,7 @@ export default function SubmitComplaintPage() {
             />
             <div>
               <span className="font-extrabold text-slate-900 block">
-                🔒 اعتبار هذا الطلب سرياً وخاصاً برئيس اللجنة والمشرف العام فقط
+                🔒 اعتبار هذا الطلب سرياً وخاصاً بأمين الشباب والمشرف العام فقط
               </span>
               <span className="text-[11px] text-slate-500">
                 لن يتم إظهار تفاصيل أو مستندات هذا الطلب لأي عضو عادي، وسيقتصر الفحص على القيادة التنفيذية.

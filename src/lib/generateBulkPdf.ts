@@ -36,7 +36,7 @@ function buildBulkHtml(
       <div style="text-align: right;">
         <span style="font-size: 13px; font-weight: bold; color: #00a3e0; display: block;">جمهورية مصر العربية • حزب مستقبل وطن</span>
         <h1 style="font-size: 20px; font-weight: 800; color: #133063; margin: 4px 0;">${title}</h1>
-        <p style="font-size: 11px; color: #64748b; margin: 0;">منظومة خدمة المواطنين المركزية • أمانة التنظيم واللجان النوعية</p>
+        <p style="font-size: 11px; color: #64748b; margin: 0;">منظومة خدمة المواطنين المركزية • حزب مستقبل وطن - أمانة مركز بركة السبع</p>
       </div>
       <div style="text-align: left;">
         <span style="font-size: 10px; color: #64748b; display: block;">تاريخ استخراج التقرير:</span>
@@ -75,7 +75,7 @@ function buildBulkHtml(
           <th style="padding: 8px 6px; border: 1px solid #cbd5e1; width: 100px;">كود الشكوى</th>
           <th style="padding: 8px 6px; border: 1px solid #cbd5e1; width: 140px;">اسم المواطن</th>
           <th style="padding: 8px 6px; border: 1px solid #cbd5e1; width: 100px;">رقم الهاتف</th>
-          <th style="padding: 8px 6px; border: 1px solid #cbd5e1; width: 130px;">اللجنة المختصة</th>
+          <th style="padding: 8px 6px; border: 1px solid #cbd5e1; width: 130px;">الأمانة المختصة</th>
           <th style="padding: 8px 6px; border: 1px solid #cbd5e1;">موضوع الطلب والتفاصيل</th>
           <th style="padding: 8px 6px; border: 1px solid #cbd5e1; width: 90px; text-align: center;">الحالة</th>
           <th style="padding: 8px 6px; border: 1px solid #cbd5e1; width: 80px; text-align: center;">تاريخ الورود</th>
@@ -85,7 +85,7 @@ function buildBulkHtml(
         ${complaints
           .map((c, index) => {
             const statusLabel = STATUS_META[c.status]?.label || c.status;
-            const committeeLabel = c.committee_name || 'لجنة رعاية الشباب';
+            const committeeLabel = c.committee_name || 'أمانة الشباب';
             const rowBg = index % 2 === 0 ? '#ffffff' : '#f8fafc';
             return `
             <tr style="background-color: ${rowBg};">
@@ -108,7 +108,7 @@ function buildBulkHtml(
 
     <div style="margin-top: 25px; padding-top: 12px; border-top: 2px solid #133063; display: flex; justify-content: space-between; text-align: center; font-size: 11px; font-weight: bold; direction: rtl;">
       <div style="flex: 1;">
-        <span style="color: #133063;">مقرر لجنة الشباب</span>
+        <span style="color: #133063;">أمين مساعد تنفيذي</span>
         <p style="margin-top: 24px; color: #475569; font-weight: normal;">( م. محمود الجزار )</p>
       </div>
       <div style="flex: 1;">
@@ -118,7 +118,7 @@ function buildBulkHtml(
         </div>
       </div>
       <div style="flex: 1;">
-        <span style="color: #133063;">رئيس لجنة رعاية الشباب</span>
+        <span style="color: #133063;">أمين الشباب ببركة السبع</span>
         <p style="margin-top: 24px; color: #475569; font-weight: normal;">( أ. سامر التلاوي )</p>
       </div>
       <div style="flex: 1;">

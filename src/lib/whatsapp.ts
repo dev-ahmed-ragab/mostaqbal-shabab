@@ -29,7 +29,7 @@ export function buildWhatsAppLink(
   const formattedPhone = formatEgyptianPhoneForWhatsApp(phone);
 
   let message = '';
-  const greeting = `أهلاً بحضرتك أستاذ/ة ${complaint.citizen_name}،\nتحية طيبة من لجنة رعاية الشباب.\n\n`;
+  const greeting = `أهلاً بحضرتك أستاذ/ة ${complaint.citizen_name}،\nتحية طيبة من أمانة الشباب بمركز بركة السبع - حزب مستقبل وطن.\n\n`;
   const reference = `📌 بخصوص طلبكم رقم: *${complaint.tracking_code}*\n📝 الموضوع: "${complaint.title}"\n\n`;
 
   switch (complaint.status) {
@@ -37,7 +37,7 @@ export function buildWhatsAppLink(
       message = `${greeting}${reference}نود إحاطتكم بأنه تم استلام طلبكم بنجاح ومدرج على جدول أعمال المراجعة الأولية. سنوافيكم بالتحديثات فوراً.`;
       break;
     case 'under_review':
-      message = `${greeting}${reference}نفيدكم بأن الشكوى حالياً *قيد المراجعة والدراسة* من قبل مسؤولي اللجنة لتحديد الإجراء المناسب.`;
+      message = `${greeting}${reference}نفيدكم بأن الشكوى حالياً *قيد المراجعة والدراسة* من قبل مسؤولي أمانة الشباب بمركز بركة السبع لتحديد الإجراء المناسب.`;
       break;
     case 'needs_info':
       message = `${greeting}${reference}نحيطكم علماً بأن الطلب *يحتاج إلى استكمال بعض البيانات أو المستندات*.\n${customNote ? `المطلوب: ${customNote}\n` : ''}يرجى موافاتنا بها لنتمكن من المتابعة.`;
@@ -46,17 +46,17 @@ export function buildWhatsAppLink(
       message = `${greeting}${reference}يسرنا إبلاغكم بأنه *جاري التنسيق والمتابعة الميدانية* مع الجهات المختصة لتنفيذ طلبكم وإزالة أسباب الشكوى.`;
       break;
     case 'resolved':
-      message = `${greeting}${reference}🎉 يسعدنا إخطاركم بأنه *تم حل وإنجاز طلبكم بنجاح*. نشكر تواصلكم الدائم وثقتكم بلجنة رعاية الشباب.`;
+      message = `${greeting}${reference}🎉 يسعدنا إخطاركم بأنه *تم حل وإنجاز طلبكم بنجاح*. نشكر تواصلكم الدائم وثقتكم بأمانة الشباب بمركز بركة السبع.`;
       break;
     case 'rejected':
-      message = `${greeting}${reference}نحيطكم علماً بأنه بعد الدراسة تعذر استكمال الطلب للأسباب الآتية:\n${customNote || 'الطلب خارج النطاق الجغرافي أو الاختصاص المحدد للجنة.'}`;
+      message = `${greeting}${reference}نحيطكم علماً بأنه بعد الدراسة تعذر استكمال الطلب للأسباب الآتية:\n${customNote || 'الطلب خارج النطاق الجغرافي أو الاختصاص المحدد لأمانة الشباب.'}`;
       break;
     default:
       message = `${greeting}${reference}نتواصل معكم بشأن استفساركم لمتابعة حالة الشكوى.`;
   }
 
   if (customNote && complaint.status !== 'needs_info' && complaint.status !== 'rejected') {
-    message += `\n\nملاحظة من اللجنة: ${customNote}`;
+    message += `\n\nملاحظة من أمانة الشباب: ${customNote}`;
   }
 
   message += `\n\nيمكنكم متابعة حالة الطلب إلكترونياً في أي وقت عبر الرابط: https://mostaqbal-shabab.vercel.app/track?code=${complaint.tracking_code}`;

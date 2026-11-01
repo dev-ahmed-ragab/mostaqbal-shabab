@@ -1,0 +1,12 @@
+# Antigravity / Gemini ignore rules for mostaqbal-shabab
+**/node_modules/**
+**/.next/**
+**/out/**
+**/build/**
+**/dist/**
+**/.turbo/**
+**/.cache/**
+**/.git/**
+**/.temp/**
+*.tsbuildinfo
+*.log

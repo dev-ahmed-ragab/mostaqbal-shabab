@@ -1,928 +1,414 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Users, 
-  UserPlus, 
-  Search, 
-  ShieldCheck, 
-  Award, 
-  Edit3, 
-  Trash2, 
-  Phone, 
-  Mail, 
-  Building2, 
-  Check, 
+import React, { useState, useEffect } from 'react';
+import {
+  Users,
+  UserPlus,
+  Trash2,
+  Loader2,
   AlertCircle,
-  Crown,
-  Zap,
-  Hammer,
+  CheckCircle2,
+  Mail,
+  Lock,
   User,
-  ShieldAlert,
-  ArrowRightLeft
+  Shield,
+  Search,
+  Eye,
+  EyeOff,
+  Copy,
+  Check,
 } from 'lucide-react';
-import { authService, AdminUser, UserRole, ROLES_META, CommitteeDef } from '@/lib/auth';
-import { committeesService } from '@/lib/committeesService';
+import { supabase } from '@/lib/supabase/client';
+import { authService } from '@/lib/auth';
 
-interface AppUserRecord {
+interface AdminRow {
   id: string;
-  name: string;
   email: string;
-  phone: string;
-  role: UserRole;
-  committeeId: string;
-  committeeName: string;
-  roleTitle: string;
-  joinedAt: string;
-  reviewedCount?: number;
-  decisionsCount?: number;
-  lastActive?: string;
-  recentActions?: string[];
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  is_super_admin: boolean;
+  created_at: string;
 }
 
-const STORAGE_USERS_KEY = 'mostaqbal_app_users_v2';
-
-const INITIAL_USERS: AppUserRecord[] = [
-  {
-    id: 'u-admin-1',
-    name: 'المحاسب / محمد بط',
-    email: 'admin@mostaqbal-watan.org',
-    phone: '01512345678',
-    role: 'admin',
-    committeeId: 'all',
-    committeeName: 'كافة لجان حزب مستقبل وطن',
-    roleTitle: 'أمين التنظيم بالمحافظة (المشرف العام)',
-    joinedAt: '2026/01/01',
-    reviewedCount: 48,
-    decisionsCount: 35,
-    lastActive: 'منذ 10 دقائق',
-    recentActions: [
-      'اعتماد نقل 4 شكاوى إلى لجنة الإسكان والمرافق',
-      'التصديق النهائي على تأشيرة لجنة رعاية الشباب رقم #WY-2026-882',
-      'إصدار التقرير الإحصائي المجمع لمحافظة المنوفية',
-    ],
-  },
-  {
-    id: 'u-head-1',
-    name: 'أ. سامر التلاوي',
-    email: 'samer.talawe@mostaqbal-watan.org',
-    phone: '01123456789',
-    role: 'committee_head',
-    committeeId: 'youth',
-    committeeName: 'لجنة رعاية الشباب',
-    roleTitle: 'رئيس لجنة رعاية الشباب',
-    joinedAt: '2026/01/10',
-    reviewedCount: 38,
-    decisionsCount: 29,
-    lastActive: 'اليوم 02:15 م',
-    recentActions: [
-      'الموافقة على طلب تنظيم دورة رمضانية بمركز شباب شبين الكوم',
-      'توجيه تأشيرة رسمية لمديرية الشباب والرياضة بالمنوفية',
-      'اعتماد دعم إنارة وتطوير الملعب الخماسي بمركز شباب الباجور',
-    ],
-  },
-  {
-    id: 'u-exec-1',
-    name: 'م. محمود الجزار',
-    email: 'mahmoud.gazzar@mostaqbal-watan.org',
-    phone: '01012345678',
-    role: 'executive_member',
-    committeeId: 'youth',
-    committeeName: 'لجنة رعاية الشباب',
-    roleTitle: 'مقرر لجنة رعاية الشباب التنفيذي',
-    joinedAt: '2026/01/15',
-    reviewedCount: 52,
-    decisionsCount: 41,
-    lastActive: 'اليوم 01:40 م',
-    recentActions: [
-      'إجراء معاينة ميدانية لملعب مركز شباب منوف',
-      'تحديث حالة الشكوى رقم WY-2026-904 إلى "قيد التنفيذ"',
-      'رفع مذكرة المعاينة الهندسية إلى أمانة المحافظة',
-    ],
-  },
-  {
-    id: 'u-exec-2',
-    name: 'أ. محمد هلال',
-    email: 'mohamed.helal@mostaqbal-watan.org',
-    phone: '01099887766',
-    role: 'executive_member',
-    committeeId: 'youth',
-    committeeName: 'لجنة رعاية الشباب',
-    roleTitle: 'قيادي ومسؤول تنفيذي ميداني',
-    joinedAt: '2026/01/20',
-    reviewedCount: 31,
-    decisionsCount: 19,
-    lastActive: 'اليوم 11:20 ص',
-    recentActions: [
-      'التنسيق مع ملتقى توظيف شباب مركز الباجور',
-      'التواصل مع المواطن مقدم الطلب رقم WY-2026-773 عبر واتساب',
-      'متابعة استكمال المستندات لشكوى نادي سرس الليان',
-    ],
-  },
-  {
-    id: 'u-mem-1',
-    name: 'أ. محمد العزب',
-    email: 'mohamed.azab@mostaqbal-watan.org',
-    phone: '01234567890',
-    role: 'member',
-    committeeId: 'youth',
-    committeeName: 'لجنة رعاية الشباب',
-    roleTitle: 'عضو لجنة الشباب ومسؤول المتابعة',
-    joinedAt: '2026/02/01',
-    reviewedCount: 27,
-    decisionsCount: 14,
-    lastActive: 'أمس 06:10 م',
-    recentActions: [
-      'استلام طلبات مركز شباب أشمون وتفريغها بالنظام',
-      'تسجيل إفادة المواطنين حول احتياجات مراكز الشباب',
-      'إرفاق صور المعاينة لملف الشكوى رقم WY-2026-618',
-    ],
-  },
-  {
-    id: 'u-cit-1',
-    name: 'أحمد محمود إبراهيم',
-    email: 'ahmed.citizen@example.com',
-    phone: '01012345678',
-    role: 'citizen',
-    committeeId: 'youth',
-    committeeName: 'لجنة رعاية الشباب',
-    roleTitle: 'مواطن مسجل بالمنظومة',
-    joinedAt: '2026/02/10',
-    reviewedCount: 1,
-    decisionsCount: 0,
-    lastActive: 'اليوم 09:00 ص',
-    recentActions: [
-      'تسجيل طلب صيانة ملعب مركز شباب قويسنا برقم WY-2026-912',
-    ],
-  },
-];
-
 export default function AdminUsersPage() {
-  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
-  const [users, setUsers] = useState<AppUserRecord[]>([]);
-  const [committees, setCommittees] = useState<CommitteeDef[]>([]);
+  const [users, setUsers] = useState<AdminRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
+  // form
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  // البحث والتصفية
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [committeeFilter, setCommitteeFilter] = useState<string>('all');
 
-  // مودال إضافة مستخدم / عضو جديد
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-  const [newPhone, setNewPhone] = useState('');
-  const [newRole, setNewRole] = useState<UserRole>('member');
-  const [newCommitteeId, setNewCommitteeId] = useState('youth');
-  const [newRoleTitle, setNewRoleTitle] = useState('');
-  const [addError, setAddError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // مودال تعديل الدور والترقية
-  const [editingUser, setEditingUser] = useState<AppUserRecord | null>(null);
+  const currentUser = authService.getCurrentUser();
+  const isSuper = !!currentUser?.isSuperAdmin;
 
-  // مودال سجل نشاط وقرارات العضو عند الضغط على الصف
-  const [selectedUserDetail, setSelectedUserDetail] = useState<AppUserRecord | null>(null);
-
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
-
-  const loadData = () => {
-    setCurrentUser(authService.getCurrentUser());
-    setCommittees(committeesService.getAll());
-
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(STORAGE_USERS_KEY);
-      if (stored) {
-        try {
-          setUsers(JSON.parse(stored));
-        } catch {
-          setUsers(INITIAL_USERS);
-        }
-      } else {
-        localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(INITIAL_USERS));
-        setUsers(INITIAL_USERS);
-      }
+  const fetchUsers = async () => {
+    if (!supabase) return;
+    setLoading(true);
+    setError(null);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, email, full_name, username, avatar_url, is_super_admin, created_at')
+      .order('created_at', { ascending: true });
+    if (error) {
+      setError(error.message);
+    } else {
+      setUsers((data || []) as AdminRow[]);
     }
-  };
-
-  const saveUsers = (updated: AppUserRecord[]) => {
-    setUsers(updated);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(updated));
-    }
+    setLoading(false);
   };
 
   useEffect(() => {
-    loadData();
-
-    const unsubComm = committeesService.subscribe(() => {
-      setCommittees(committeesService.getAll());
-    });
-    const unsubAuth = authService.subscribe(() => {
-      setCurrentUser(authService.getCurrentUser());
-    });
-
-    return () => {
-      unsubComm();
-      unsubAuth();
-    };
+    void (async () => {
+      await fetchUsers();
+    })();
   }, []);
 
-  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin';
-
-  // تصفية المستخدمين
-  const filteredUsers = useMemo(() => {
-    return users.filter(u => {
-      if (roleFilter !== 'all' && u.role !== roleFilter) return false;
-      if (committeeFilter !== 'all' && u.committeeId !== committeeFilter) return false;
-      if (searchQuery.trim()) {
-        const q = searchQuery.trim().toLowerCase();
-        return (
-          u.name.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q) ||
-          u.phone.includes(q) ||
-          u.roleTitle.toLowerCase().includes(q)
-        );
-      }
-      return true;
-    });
-  }, [users, roleFilter, committeeFilter, searchQuery]);
-
-  // إحصائيات الأدوار
-  const roleStats = useMemo(() => {
-    return {
-      admin: users.filter(u => u.role === 'admin' || (u.role as string) === 'super_admin').length,
-      head: users.filter(u => u.role === 'committee_head').length,
-      exec: users.filter(u => u.role === 'executive_member').length,
-      member: users.filter(u => u.role === 'member').length,
-      citizen: users.filter(u => u.role === 'citizen').length,
-    };
-  }, [users]);
-
-  // إضافة عضو جديد
-  const handleAddUser = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    setAddError(null);
-
-    if (!newName.trim()) {
-      setAddError('يرجى كتابة الاسم بالكامل.');
+    setError(null);
+    setSuccess(null);
+    if (!supabase) return;
+    if (!email.trim() || password.length < 8 || !fullName.trim()) {
+      setError('يرجى إدخال الاسم والبريد وكلمة مرور (≥8 أحرف).');
       return;
     }
-
-    const targetComm = committees.find(c => c.id === newCommitteeId) || committees[0];
-
-    const newUser: AppUserRecord = {
-      id: `u-${Date.now()}`,
-      name: newName.trim(),
-      email: newEmail.trim() || `${Date.now()}@mostaqbal-watan.org`,
-      phone: newPhone.trim() || '01000000000',
-      role: newRole,
-      committeeId: newRole === 'admin' ? 'all' : targetComm.id,
-      committeeName: newRole === 'admin' ? 'كافة لجان حزب مستقبل وطن' : targetComm.name,
-      roleTitle: newRoleTitle.trim() || (ROLES_META[newRole]?.label || 'عضو معتمد'),
-      joinedAt: new Date().toLocaleDateString('ar-EG'),
-    };
-
-    const updated = [newUser, ...users];
-    saveUsers(updated);
-    showToast(`تمت إضافة ${newUser.name} بدور (${ROLES_META[newRole]?.label}) بنجاح`);
-    setShowAddModal(false);
-
-    setNewName('');
-    setNewEmail('');
-    setNewPhone('');
-    setNewRoleTitle('');
-  };
-
-  // تعديل الدور وترقية العضو
-  const handleSaveRoleChange = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingUser) return;
-
-    const targetComm = committees.find(c => c.id === editingUser.committeeId) || committees[0];
-
-    const updated = users.map(u => {
-      if (u.id === editingUser.id) {
-        return {
-          ...editingUser,
-          committeeName: editingUser.role === 'admin' ? 'كافة لجان حزب مستقبل وطن' : targetComm.name,
-        };
-      }
-      return u;
-    });
-
-    saveUsers(updated);
-    showToast(`تم تحديث دور وصلاحيات "${editingUser.name}" بنجاح`);
-    setEditingUser(null);
-  };
-
-  // حذف عضو
-  const handleDeleteUser = (user: AppUserRecord) => {
-    if (!isAdmin) {
-      alert('حذف الأعضاء مقتصر على المشرف العام.');
-      return;
+    setCreating(true);
+    try {
+      const { error } = await supabase.rpc('create_admin_user', {
+        p_email: email.trim(),
+        p_password: password,
+        p_full_name: fullName.trim(),
+        p_username: username.trim() || null,
+      });
+      if (error) throw error;
+      setSuccess(`تم إنشاء حساب المشرف ${fullName.trim()} (${email.trim()}) بنجاح.`);
+      setEmail('');
+      setPassword('');
+      setFullName('');
+      setUsername('');
+      await fetchUsers();
+    } catch (err) {
+      const m = err instanceof Error ? err.message : 'تعذر إنشاء الحساب.';
+      setError(m);
+    } finally {
+      setCreating(false);
     }
-
-    if (user.id === 'u-admin-1') {
-      alert('لا يمكن حذف حساب المشرف العام الأساسي.');
-      return;
-    }
-
-    if (!window.confirm(`هل أنت متأكد من حذف حساب "${user.name}"؟`)) return;
-
-    const updated = users.filter(u => u.id !== user.id);
-    saveUsers(updated);
-    showToast(`تم حذف حساب ${user.name}`);
   };
+
+  const handleDelete = async (id: string, email: string) => {
+    if (!supabase) return;
+    if (!confirm(`حذف حساب ${email}؟`)) return;
+    setDeletingId(id);
+    setError(null);
+    setSuccess(null);
+    try {
+      const { error } = await supabase.rpc('delete_admin_user', { p_user_id: id });
+      if (error) throw error;
+      setSuccess(`تم حذف ${email}.`);
+      await fetchUsers();
+    } catch (err) {
+      const m = err instanceof Error ? err.message : 'تعذر الحذف.';
+      setError(m);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleCopy = (u: AdminRow) => {
+    const text = `بيانات دخول المشرف:\nالاسم: ${u.full_name || ''}\nالبريد: ${u.email}\nرابط الدخول: ${window.location.origin}/login`;
+    navigator.clipboard.writeText(text);
+    setCopiedId(u.id);
+    setTimeout(() => setCopiedId(null), 2500);
+  };
+
+  const filteredUsers = users.filter((u) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (u.full_name && u.full_name.toLowerCase().includes(q)) ||
+      (u.email && u.email.toLowerCase().includes(q)) ||
+      (u.username && u.username.toLowerCase().includes(q))
+    );
+  });
+
+  if (!isSuper) {
+    return (
+      <div className="p-6 text-sm font-bold text-rose-700 bg-rose-50 rounded-2xl border border-rose-200">
+        هذه الصفحة مخصصة للمشرف العام (سوبر أدمن) فقط لإدارة حسابات الأمانة.
+      </div>
+    );
+  }
+
+  const superAdminsCount = users.filter(u => u.is_super_admin).length;
+  const regularAdminsCount = users.filter(u => !u.is_super_admin).length;
 
   return (
     <div className="space-y-6">
-      {/* إشعار الـ Toast */}
-      {toastMessage && (
-        <div className="fixed bottom-6 left-6 z-50 bg-[#133063] text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 text-xs font-bold border border-[#00a3e0] transition-all">
-          <Check className="w-4 h-4 text-[#00a3e0]" />
-          <span>{toastMessage}</span>
+      {/* الترويسة */}
+      <div>
+        <h2 className="text-xl font-extrabold text-[#133063] flex items-center gap-2">
+          <Users className="w-6 h-6 text-[#00a3e0]" />
+          إدارة مستخدمي ومشرفي الأمانة
+        </h2>
+        <p className="text-xs text-slate-500 mt-1">
+          إضافة وتعيين أعضاء فريق العمل والمشرفين الميدانيين. يتم تزويد العضو ببيانات الدخول مباشرة دون انتظار بريد إلكتروني.
+        </p>
+      </div>
+
+      {/* شريط الإحصائيات السريع للمستخدمين */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 block">إجمالي المشرفين</span>
+            <strong className="text-xl font-black text-[#133063]">{users.length}</strong>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#00a3e0] flex items-center justify-center">
+            <Users className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 block">مشرفو الإدارة العامة</span>
+            <strong className="text-xl font-black text-emerald-700">{superAdminsCount}</strong>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <Shield className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 block">مشرفو المتابعة الميدانية</span>
+            <strong className="text-xl font-black text-indigo-700">{regularAdminsCount}</strong>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <User className="w-5 h-5" />
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5 font-bold animate-in fade-in">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+          <span>{error}</span>
+        </div>
+      )}
+      {success && (
+        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2.5 font-bold animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+          <span>{success}</span>
         </div>
       )}
 
-      {/* رأس الصفحة مع شرح الأدوار والتسلسل الهرمي */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-xs relative overflow-hidden">
-        <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-[#133063] to-[#00a3e0]" />
+      {/* نموذج إضافة مستخدم جديد */}
+      <form onSubmit={handleCreate} className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h3 className="text-sm font-extrabold text-[#133063] flex items-center gap-2">
+            <UserPlus className="w-4 h-4 text-[#00a3e0]" />
+            إضافة حساب مشرف جديد
+          </h3>
+          <span className="text-[11px] text-slate-400 font-bold">صلاحيات فحص الشكاوى واعتماد التأشيرات</span>
+        </div>
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[#133063] border border-blue-200 text-[11px] font-extrabold flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-[#00a3e0]" />
-                إدارة المستخدمين والأدوار الحزبية
-              </span>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">الاسم بالكامل *</label>
+            <div className="relative">
+              <input
+                type="text"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="أحمد محمود إبراهيم"
+                className="w-full pl-3 pr-10 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30"
+              />
+              <User className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-[#133063]">
-              توزيع الأدوار والصلاحيات
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-              إدارة الهيكل الإداري: المشرف العام (الأدمن) بالأعلى، يليه رؤساء اللجان النوعية، ثم الأعضاء التنفيذيون والميدانيون، وأعضاء اللجان، والمواطنون المسجلون.
-            </p>
           </div>
 
-          {/* زر إضافة مستخدم أو عضو */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">اسم المستخدم (اختياري للتعريف)</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="ahmed_youth"
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30"
+              dir="ltr"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">البريد الإلكتروني المهني *</label>
+            <div className="relative">
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="supervisor@mostaqbal-watan.org"
+                className="w-full pl-3 pr-10 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30"
+                dir="ltr"
+              />
+              <Mail className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">كلمة المرور الابتدائية (≥ 8 أحرف) *</label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30"
+                dir="ltr"
+              />
+              <Lock className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute left-3 top-2.5 text-slate-400 hover:text-slate-600"
+                title={showPassword ? 'إخفاء' : 'إظهار'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-2">
           <button
-            type="button"
-            onClick={() => {
-              setAddError(null);
-              setShowAddModal(true);
-            }}
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#133063] hover:bg-[#0d234a] text-white text-xs sm:text-sm font-extrabold shadow-md shadow-[#133063]/25 active:scale-95 transition cursor-pointer shrink-0"
+            type="submit"
+            disabled={creating}
+            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#133063] hover:bg-[#0d234a] text-white text-xs font-bold transition shadow-sm disabled:opacity-50 cursor-pointer"
           >
-            <UserPlus className="w-4 h-4 text-[#00a3e0]" />
-            <span>تسجيل عضو / قيادي جديد</span>
+            {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4 text-[#00a3e0]" />}
+            إنشاء حساب المشرف
           </button>
         </div>
+      </form>
 
-        {/* كروت بطاقات الأدوار الخمسة */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6 pt-6 border-t border-slate-100">
-          <div className="p-3 rounded-2xl bg-blue-50/80 border border-blue-200">
-            <span className="text-[10px] font-bold text-slate-500 block">👑 المشرف العام</span>
-            <span className="text-lg font-black text-[#133063] mt-0.5 block">{roleStats.admin} حساب</span>
-          </div>
+      {/* قائمة المستخدمين مع محرك بحث وتصفية */}
+      <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
+        <div className="px-5 py-3.5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h3 className="text-sm font-extrabold text-[#133063] flex items-center gap-2">
+            قائمة المشرفين المسجلين ({filteredUsers.length})
+          </h3>
 
-          <div className="p-3 rounded-2xl bg-cyan-50/80 border border-cyan-200">
-            <span className="text-[10px] font-bold text-[#00a3e0] block">⚡ رؤساء اللجان</span>
-            <span className="text-lg font-black text-[#00a3e0] mt-0.5 block">{roleStats.head} رؤساء</span>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-indigo-50/80 border border-indigo-200">
-            <span className="text-[10px] font-bold text-indigo-700 block">🛠️ أعضاء تنفيذيون</span>
-            <span className="text-lg font-black text-indigo-800 mt-0.5 block">{roleStats.exec} أعضاء</span>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-slate-100 border border-slate-200">
-            <span className="text-[10px] font-bold text-slate-600 block">📋 أعضاء اللجان</span>
-            <span className="text-lg font-black text-slate-800 mt-0.5 block">{roleStats.member} أعضاء</span>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200 col-span-2 sm:col-span-1">
-            <span className="text-[10px] font-bold text-emerald-700 block">👤 مواطنون مسجلون</span>
-            <span className="text-lg font-black text-emerald-800 mt-0.5 block">{roleStats.citizen} مواطن</span>
+          <div className="relative w-full sm:w-64">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="بحث بالاسم أو البريد..."
+              className="w-full pr-8 pl-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30"
+            />
           </div>
         </div>
-      </div>
 
-      {/* شريط البحث وفلاتر الأدوار واللجان */}
-      <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-3">
-        <div className="relative w-full md:w-80">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="ابحث بالاسم، البريد، الهاتف، أو المسمى..."
-            className="w-full pl-3 pr-10 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0]"
-          />
-          <Search className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          {/* فلتر الدور */}
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="py-2 px-3 rounded-xl border border-slate-200 text-xs font-bold bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30"
-          >
-            <option value="all">كافة الأدوار والصلاحيات</option>
-            <option value="admin">👑 المشرف العام (Admin)</option>
-            <option value="committee_head">⚡ رؤساء اللجان (Head)</option>
-            <option value="executive_member">🛠️ أعضاء تنفيذيون (Executive)</option>
-            <option value="member">📋 أعضاء اللجان (Member)</option>
-            <option value="citizen">👤 مواطنون (Citizen)</option>
-          </select>
-
-          {/* فلتر اللجنة */}
-          <select
-            value={committeeFilter}
-            onChange={(e) => setCommitteeFilter(e.target.value)}
-            className="py-2 px-3 rounded-xl border border-slate-200 text-xs font-bold bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30"
-          >
-            <option value="all">كافة اللجان</option>
-            {committees.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* جدول المستخدمين والأدوار */}
-      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-right text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-extrabold">
-              <tr>
-                <th className="py-3.5 px-4">الاسم والبيانات</th>
-                <th className="py-3.5 px-4">الدور والصلاحية</th>
-                <th className="py-3.5 px-4">اللجنة التابع لها</th>
-                <th className="py-3.5 px-4">المسمى التنظيمي</th>
-                <th className="py-3.5 px-4">تاريخ الانضمام</th>
-                <th className="py-3.5 px-4 text-center">إجراءات</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400 font-bold">
-                    لا يوجد أعضاء مطابقين للبحث المختار.
-                  </td>
-                </tr>
-              ) : (
-                filteredUsers.map((user) => {
-                  const meta = ROLES_META[user.role] || ROLES_META.member;
-                  return (
-                    <tr 
-                      key={user.id} 
-                      onClick={() => setSelectedUserDetail(user)}
-                      className="hover:bg-blue-50/60 transition-colors cursor-pointer group"
-                      title="اضغط لعرض سجل نشاط وإنجازات العضو أو ترقيته"
-                    >
-                      {/* الاسم وبيانات الاتصال */}
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs text-white shrink-0 ${meta.badgeBg}`}>
-                            {user.name.charAt(0)}
-                          </div>
-                          <div>
-                            <span className="font-extrabold text-[#133063] block text-xs sm:text-sm group-hover:text-[#00a3e0] transition">
-                              {user.name}
-                            </span>
-                            <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
-                              <span className="font-mono" dir="ltr">{user.phone}</span>
-                              <span>•</span>
-                              <span className="font-mono truncate max-w-[150px]">{user.email}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* الدور والصلاحيات */}
-                      <td className="py-3.5 px-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-extrabold ${meta.badgeBg} ${meta.badgeText} shadow-2xs`}>
-                          {user.role === 'admin' ? '👑 المشرف العام' :
-                           user.role === 'committee_head' ? '⚡ رئيس لجنة' :
-                           user.role === 'executive_member' ? '🛠️ عضو تنفيذي' :
-                           user.role === 'citizen' ? '👤 مواطن' : '📋 عضو لجنة'}
-                        </span>
-                      </td>
-
-                      {/* اللجنة التابع لها */}
-                      <td className="py-3.5 px-4">
-                        <span className="font-bold text-slate-700 block">
-                          {user.committeeName}
-                        </span>
-                      </td>
-
-                      {/* المسمى الوظيفي */}
-                      <td className="py-3.5 px-4 text-slate-600">
-                        {user.roleTitle}
-                      </td>
-
-                      {/* تاريخ الانضمام */}
-                      <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
-                        {user.joinedAt}
-                      </td>
-
-                      {/* الإجراءات: ترقية، تعديل، حذف */}
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingUser(user);
-                            }}
-                            className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 transition"
-                            title="تعديل الدور وترقية العضو"
-                          >
-                            <Edit3 className="w-3.5 h-3.5 text-[#00a3e0]" />
-                          </button>
-
-                          {isAdmin && user.id !== 'u-admin-1' && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteUser(user);
-                              }}
-                              className="p-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white transition"
-                              title="حذف الحساب"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* مودال إضافة عضو / قيادي جديد */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#133063] flex items-center justify-center border border-blue-200">
-                  <UserPlus className="w-5 h-5 text-[#00a3e0]" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-[#133063]">تسجيل عضو / قيادي جديد</h3>
-                  <span className="text-[11px] text-slate-400">إضافة عضو جديد للهيكل التنظيمي</span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowAddModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100"
-              >
-                ✕
-              </button>
-            </div>
-
-            {addError && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                <span>{addError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleAddUser} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">الاسم بالكامل *</label>
-                <input
-                  type="text"
-                  required
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  placeholder="مثال: م. أحمد السعيد"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0]"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">البريد الإلكتروني</label>
-                  <input
-                    type="email"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    placeholder="ahmed@mostaqbal-watan.org"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0]"
-                    dir="ltr"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">رقم الهاتف المحمول</label>
-                  <input
-                    type="tel"
-                    value={newPhone}
-                    onChange={(e) => setNewPhone(e.target.value)}
-                    placeholder="01012345678"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0]"
-                    dir="ltr"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">الدور والصلاحية *</label>
-                  <select
-                    value={newRole}
-                    onChange={(e) => setNewRole(e.target.value as UserRole)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0] bg-white"
-                  >
-                    <option value="admin">👑 المشرف العام (أمانة اللجان)</option>
-                    <option value="committee_head">⚡ رئيس لجنة نوعية</option>
-                    <option value="executive_member">🛠️ عضو تنفيذي معتمد</option>
-                    <option value="member">📋 عضو لجنة (متابعة)</option>
-                    <option value="citizen">👤 مواطن</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">اللجنة التابع لها</label>
-                  <select
-                    disabled={newRole === 'admin'}
-                    value={newCommitteeId}
-                    onChange={(e) => setNewCommitteeId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0] bg-white disabled:bg-slate-100"
-                  >
-                    {committees.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">المسمى التنظيمي للبطاقة</label>
-                <input
-                  type="text"
-                  value={newRoleTitle}
-                  onChange={(e) => setNewRoleTitle(e.target.value)}
-                  placeholder="مثال: مسؤول قطاع الشباب والرياضة"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0]"
-                />
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold"
-                >
-                  إلغاء
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-[#133063] hover:bg-[#0d234a] text-white text-xs font-bold shadow-md shadow-[#133063]/20 active:scale-95 transition"
-                >
-                  حفظ العضو
-                </button>
-              </div>
-            </form>
+        {loading ? (
+          <div className="p-8 text-center text-xs text-slate-400 font-bold">
+            <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-[#00a3e0]" />
+            جاري تحميل قائمة المشرفين...
           </div>
-        </div>
-      )}
-
-      {/* مودال تعديل الدور والترقية */}
-      {editingUser && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
-              <div>
-                <h3 className="text-base font-extrabold text-[#133063]">
-                  ترقية وتعديل دور: {editingUser.name}
-                </h3>
-                <span className="text-[11px] text-slate-400">تغيير الصلاحيات واللجنة المكلفة</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setEditingUser(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveRoleChange} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">الاسم</label>
-                <input
-                  type="text"
-                  required
-                  value={editingUser.name}
-                  onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0]"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">الدور والصلاحية الجديد</label>
-                  <select
-                    value={editingUser.role}
-                    onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as UserRole })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0] bg-white"
-                  >
-                    <option value="admin">👑 المشرف العام (أمانة اللجان)</option>
-                    <option value="committee_head">⚡ رئيس لجنة نوعية</option>
-                    <option value="executive_member">🛠️ عضو تنفيذي معتمد</option>
-                    <option value="member">📋 عضو لجنة (متابعة)</option>
-                    <option value="citizen">👤 مواطن</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">اللجنة المكلف بها</label>
-                  <select
-                    disabled={editingUser.role === 'admin'}
-                    value={editingUser.committeeId}
-                    onChange={(e) => setEditingUser({ ...editingUser, committeeId: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0] bg-white disabled:bg-slate-100"
-                  >
-                    {committees.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">المسمى التنظيمي الرسمي</label>
-                <input
-                  type="text"
-                  value={editingUser.roleTitle}
-                  onChange={(e) => setEditingUser({ ...editingUser, roleTitle: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-[#00a3e0]/30 focus:border-[#00a3e0]"
-                />
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setEditingUser(null)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold"
-                >
-                  إلغاء
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-[#133063] hover:bg-[#0d234a] text-white text-xs font-bold shadow-md shadow-[#133063]/20 active:scale-95 transition"
-                >
-                  اعتماد الترقية والتعديل
-                </button>
-              </div>
-            </form>
+        ) : filteredUsers.length === 0 ? (
+          <div className="p-8 text-center text-xs text-slate-400 font-bold">
+            لا يوجد مشرفون مطابقون للبحث.
           </div>
-        </div>
-      )}
-
-      {/* مودال تفاصيل وسجل نشاط العضو عند الضغط على الصف */}
-      {selectedUserDetail && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            {/* الترويسة مع زر الإغلاق */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
-              <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-extrabold text-base text-white shadow-md ${
-                  (ROLES_META[selectedUserDetail.role] || ROLES_META.member).badgeBg
-                }`}>
-                  {selectedUserDetail.name.charAt(0)}
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-[#133063]">{selectedUserDetail.name}</h3>
-                  <span className="text-xs text-slate-500 font-semibold">{selectedUserDetail.roleTitle}</span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedUserDetail(null)}
-                className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* بطاقة البيانات الأساسية */}
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-2.5 mb-6 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-bold">الدور الحالي:</span>
-                <span className={`px-2.5 py-0.5 rounded-lg text-xs font-black ${
-                  (ROLES_META[selectedUserDetail.role] || ROLES_META.member).badgeBg
-                } ${(ROLES_META[selectedUserDetail.role] || ROLES_META.member).badgeText}`}>
-                  {(ROLES_META[selectedUserDetail.role] || ROLES_META.member).label}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-bold">اللجنة التابع لها:</span>
-                <span className="font-extrabold text-slate-800">{selectedUserDetail.committeeName}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-bold">الهاتف:</span>
-                <span className="font-mono text-slate-700 font-bold" dir="ltr">{selectedUserDetail.phone}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-bold">البريد:</span>
-                <span className="font-mono text-slate-700 truncate max-w-[200px]">{selectedUserDetail.email}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-bold">تاريخ الانضمام:</span>
-                <span className="font-mono text-slate-600">{selectedUserDetail.joinedAt}</span>
-              </div>
-            </div>
-
-            {/* إحصائيات النشاط والإنجازات */}
-            <div className="mb-6">
-              <h4 className="text-xs font-extrabold text-[#133063] mb-3 flex items-center gap-1.5">
-                <Award className="w-4 h-4 text-[#00a3e0]" />
-                مؤشرات الإنجاز والنشاط الميداني
-              </h4>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 rounded-2xl bg-blue-50/80 border border-blue-200 text-center">
-                  <span className="text-[10px] font-bold text-slate-500 block">طلبات مفحوصة</span>
-                  <span className="text-lg font-black text-[#133063] mt-0.5 block">
-                    {selectedUserDetail.reviewedCount ?? 12}
-                  </span>
-                </div>
-                <div className="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-center">
-                  <span className="text-[10px] font-bold text-emerald-700 block">قرارات معتمدة</span>
-                  <span className="text-lg font-black text-emerald-800 mt-0.5 block">
-                    {selectedUserDetail.decisionsCount ?? 8}
-                  </span>
-                </div>
-                <div className="p-3 rounded-2xl bg-amber-50/80 border border-amber-200 text-center">
-                  <span className="text-[10px] font-bold text-amber-700 block">آخر ظهور</span>
-                  <span className="text-xs font-black text-amber-900 mt-1 block truncate">
-                    {selectedUserDetail.lastActive ?? 'اليوم'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* سجل العمليات والقرارات الأخيرة (Audit Trail) */}
-            <div className="mb-6">
-              <h4 className="text-xs font-extrabold text-[#133063] mb-3 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                سجل العمليات والقرارات الأخيرة
-              </h4>
-              <div className="space-y-2">
-                {(selectedUserDetail.recentActions && selectedUserDetail.recentActions.length > 0) ? (
-                  selectedUserDetail.recentActions.map((action, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                      <span className="text-slate-700 leading-relaxed">{action}</span>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {filteredUsers.map((u) => (
+              <li key={u.id} className="flex items-center justify-between p-4 sm:px-6 gap-3 hover:bg-slate-50/60 transition">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  {u.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={u.avatar_url} alt="" className="w-10 h-10 rounded-2xl object-cover border border-slate-200 shadow-2xs" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-2xl bg-[#133063] text-white flex items-center justify-center font-black text-sm shadow-2xs">
+                      {u.full_name ? u.full_name.trim().charAt(0) : 'م'}
                     </div>
-                  ))
-                ) : (
-                  <div className="text-xs text-slate-400 p-3 bg-slate-50 rounded-xl text-center">
-                    لا توجد عمليات مسجلة حديثاً لهذا الحساب.
+                  )}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs sm:text-sm font-extrabold text-[#133063] truncate">
+                        {u.full_name || u.email}
+                      </p>
+                      {u.is_super_admin ? (
+                        <span className="text-[9.5px] px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-extrabold">
+                          مشرف عام
+                        </span>
+                      ) : (
+                        <span className="text-[9.5px] px-2 py-0.5 rounded-md bg-blue-50 text-[#133063] border border-blue-200 font-bold">
+                          مشرف متابعة
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-0.5">
+                      <span className="font-mono" dir="ltr">
+                        {u.username ? `@${u.username} · ` : ''}{u.email}
+                      </span>
+                      <span>•</span>
+                      <span className="text-slate-400 text-[10px]">
+                        انضم {new Date(u.created_at).toLocaleDateString('ar-EG')}
+                      </span>
+                    </div>
                   </div>
-                )}
-              </div>
-            </div>
+                </div>
 
-            {/* الأزرار السريعة */}
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  const u = selectedUserDetail;
-                  setSelectedUserDetail(null);
-                  setEditingUser(u);
-                }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#00a3e0] hover:bg-[#0284c7] text-white text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>تعديل الصلاحيات والترقية</span>
-              </button>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(u)}
+                    className="p-2 rounded-xl border border-slate-200 hover:bg-white text-slate-600 transition shadow-2xs"
+                    title="نسخ بيانات الدخول"
+                  >
+                    {copiedId === u.id ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => setSelectedUserDetail(null)}
-                className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition"
-              >
-                إغلاق
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                  {!u.is_super_admin && (
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(u.id, u.email)}
+                      disabled={deletingId === u.id}
+                      className="p-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 transition disabled:opacity-50"
+                      title="حذف الحساب"
+                    >
+                      {deletingId === u.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="text-[11px] text-slate-400 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+        💡 <b>ملاحظة إدارية:</b> حساب المشرف العام محمي ولا يمكن حذفه. يمكن للمشرفين بعد تسجيل الدخول تحديث كلمة المرور وصورتهم الشخصية من تبويب &quot;إعدادات الحساب&quot;.
+      </div>
     </div>
   );
 }
