@@ -69,14 +69,14 @@ export default function AdminLayoutClient({
       href: '/admin/users',
       label: 'إدارة المستخدمين',
       icon: Users,
-      badge: null,
-      adminOnly: true,
+      badge: 'مؤجل مؤقتاً',
+      adminOnly: false,
     },
     {
       href: '/account',
       label: 'إعدادات الحساب',
       icon: UserCircle,
-      badge: null,
+      badge: 'موقوف مؤقتاً',
       adminOnly: false,
     },
   ].filter((item) => !item.adminOnly || isSuperAdmin);
@@ -154,8 +154,10 @@ export default function AdminLayoutClient({
                 </div>
                 {item.badge && (
                   <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                    className={`px-2 py-0.5 rounded-md text-[9.5px] font-bold ${
+                      isActive
+                        ? 'bg-white/20 text-white'
+                        : 'bg-amber-50 text-amber-800 border border-amber-200'
                     }`}
                   >
                     {item.badge}
