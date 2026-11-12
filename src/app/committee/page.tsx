@@ -35,6 +35,18 @@ interface LeaderMember {
 
 const LEADERS_DATA: LeaderMember[] = [
   {
+    id: 'gendy',
+    name: 'الأستاذ / إيهاب الجندي',
+    title: 'أمين العمل الجماهيري بمركز بركة السبع',
+    roleDescription: 'قيادة وتنظيم الفعاليات والمبادرات الجماهيرية والمجتمعية الميدانية، والتواصل المباشر مع أهالي وقرى المركز لتعزيز التلاحم الشعبي وتلبية احتياجات المواطنين.',
+    badge: 'أمين العمل الجماهيري بالمركز',
+    avatarSrc: '/leaders/avatar-gendy.jpg',
+    fullSrc: '/leaders/full-gendy.jpg',
+    facebookUrl: 'https://facebook.com/ehab.elgendy.official',
+    organization: 'حزب مستقبل وطن - أمانة مركز بركة السبع',
+    locationScope: 'أمانة مركز بركة السبع'
+  },
+  {
     id: 'talawe',
     name: 'النائب / سامر التلاوي',
     title: 'أمين المحافظة بحزب مستقبل وطن',
